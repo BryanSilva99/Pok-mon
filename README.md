@@ -1,2 +1,2 @@
-# Pok-mon
+# Pokémon
 Proyecto del curso de Inteligencia Artificial basado en Pokémon.
