@@ -21,8 +21,9 @@ p2.aprender_movimiento(placaje)
 p2.aprender_movimiento(rayo_solar)
 
 
-def evaluar(p1, p2):
-    return p1.hp_actual - p2.hp_actual
+def evaluar(pokemon1, pokemon2):
+    """Devuelve una puntuación simple basada en la diferencia de HP actual."""
+    return pokemon1.hp_actual - pokemon2.hp_actual
 
 
 def elegir_mejor_movimiento(p1, p2):
