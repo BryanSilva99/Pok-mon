@@ -12,7 +12,7 @@ class Pokemon:
         self.movimientos = []
 
     # Métodos para manejar el estado del Pokémon
-    # El método esta_vivo verifica si el Pokémon tiene HP actual mayor que 0, lo que indica que está vivo. El método recibir_daño reduce el HP actual del Pokémon en función del daño recibido, asegurándose de que no caiga por debajo de 0. El método curar aumenta el HP actual del Pokémon, pero no permite que supere el HP máximo. El método aprender_movimiento agrega un nuevo movimiento a la lista de movimientos del Pokémon, siempre y cuando no tenga más de 4 movimientos. El método copiar crea una copia profunda del objeto Pokémon, lo que es útil para simular batallas sin modificar el estado original. Finalmente, el método aplicar_estado_turno es un espacio reservado para implementar efectos de estado que se aplican al inicio de cada turno.
+    # El método esta_vivo verifica si el Pokémon tiene HP actual mayor que 0, lo que indica que está vivo.
     def esta_vivo(self):
         return self.hp_actual > 0
 
@@ -23,8 +23,8 @@ class Pokemon:
         return int(daño)
 
     # El método curar toma una cantidad de curación y la suma al HP actual del Pokémon, asegurándose de que no exceda el HP máximo. Esto permite que el Pokémon recupere salud durante la batalla o después de ella.
-    def curar(self, cantidad):
-        self.hp_actual = min(self.hp_max, self.hp_actual + cantidad)
+    #  # def curar(self, cantidad):
+    #    self.hp_actual = min(self.hp_max, self.hp_actual + cantidad)
 
     # El método aprender_movimiento permite que el Pokémon aprenda un nuevo movimiento, siempre y cuando no tenga más de 4 movimientos en su lista. Si el Pokémon ya tiene 4 movimientos, el método devuelve False, indicando que no se puede aprender un nuevo movimiento. Si el movimiento se agrega con éxito, el método devuelve True.
     def aprender_movimiento(self, movimiento):
