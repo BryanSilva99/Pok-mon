@@ -1,7 +1,7 @@
 from Modelos.Pokemon import Pokemon
 from Modelos.Movimiento import Movimiento
 from Batalla.Combate import turno
-from Batalla.IA.Heuristicas import elegir_mejor_movimiento
+from IA.Heuristicas import elegir_mejor_movimiento
 import random
 
 # crear movimientos
@@ -21,7 +21,7 @@ p4 = Pokemon("Squirtle", 60, 48, 65, 43, "agua")
 # asignar movimientos
 p1.aprender_movimiento(rayo_carga)
 p1.aprender_movimiento(placaje)
-# p1.aprender_movimiento(golpe_cuerpo)
+p1.aprender_movimiento(golpe_cuerpo)
 p1.aprender_movimiento(placaje_electrico)
 
 
@@ -39,12 +39,21 @@ while p1.esta_vivo() and p2.esta_vivo():
     print(f"{p1.nombre}: {p1.hp_actual} HP")
     print(f"{p2.nombre}: {p2.hp_actual} HP")
 
-    turno(p1, p2, mov1, mov2)
+    eventos = turno(p1, p2, mov1, mov2)
 
-    print(f"{p1.nombre} usó {mov1.nombre}!")
-    if p2.esta_vivo():
-        print(f"{p2.nombre} usó {mov2.nombre}!")
+    # 👉 imprimir lo que pasó en el turno
+    for e in eventos:
+        if e["fallo"]:
+            print(f"{e['atacante']} usó {e['movimiento']}... ¡falló!")
+        else:
+            print(f"{e['atacante']} usó {e['movimiento']} e hizo {e['daño']} daño")
 
+            if e["mult"] > 1:
+                print("¡Es súper efectivo!")
+            elif e["mult"] < 1:
+                print("No es muy efectivo...")
+
+    # 👉 estado final del turno
     print(f"{p1.nombre}: {p1.hp_actual} HP")
     print(f"{p2.nombre}: {p2.hp_actual} HP")
 
