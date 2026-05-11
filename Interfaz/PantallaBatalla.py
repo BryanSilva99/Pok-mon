@@ -43,6 +43,7 @@ RIVAL_INDICADORES_POS = (126, 132)
 
 BLANCO = (245, 245, 245)
 NEGRO = (30, 30, 30)
+TEXTO_SUAVE = (48, 58, 65)
 AZUL_FONDO = (124, 190, 222)
 VERDE_SUELO = (110, 180, 110)
 VERDE_CLARO = (164, 220, 142)
@@ -50,6 +51,14 @@ VERDE_OSCURO = (68, 145, 86)
 AZUL_CIELO_CLARO = (185, 225, 245)
 GRIS_PANEL = (235, 235, 235)
 GRIS_BORDE = (60, 60, 60)
+CARD_FONDO = (252, 250, 238)
+CARD_BORDE = (49, 61, 75)
+CARD_SOMBRA = (58, 87, 70)
+BOTON_FONDO = (255, 248, 224)
+BOTON_FONDO_HOVER = (255, 235, 166)
+BOTON_BORDE = (63, 76, 92)
+BOTON_SOMBRA = (105, 105, 105)
+PANEL_FONDO = (238, 242, 236)
 VERDE_HP = (70, 190, 80)
 AMARILLO_HP = (230, 190, 55)
 ROJO_HP = (220, 70, 70)
@@ -74,10 +83,15 @@ class Boton:
         self.accion = accion
 
     def dibujar(self, pantalla, fuente):
-        pygame.draw.rect(pantalla, BLANCO, self.rect, border_radius=6)
-        pygame.draw.rect(pantalla, GRIS_BORDE, self.rect, 2, border_radius=6)
+        mouse_encima = self.contiene(pygame.mouse.get_pos())
+        fondo = BOTON_FONDO_HOVER if mouse_encima else BOTON_FONDO
+        sombra = self.rect.move(3, 3)
+
+        pygame.draw.rect(pantalla, BOTON_SOMBRA, sombra, border_radius=7)
+        pygame.draw.rect(pantalla, fondo, self.rect, border_radius=7)
+        pygame.draw.rect(pantalla, BOTON_BORDE, self.rect, 2, border_radius=7)
         texto_boton = ajustar_texto(self.texto, fuente, self.rect.width - 16)
-        texto = fuente.render(texto_boton, True, NEGRO)
+        texto = fuente.render(texto_boton, True, TEXTO_SUAVE)
         texto_rect = texto.get_rect(center=self.rect.center)
         pantalla.blit(texto, texto_rect)
 
@@ -96,6 +110,13 @@ def ajustar_texto(texto, fuente, ancho_maximo):
     return texto_corto + "..."
 
 
+def dibujar_card(pantalla, rect, fondo=CARD_FONDO, borde=CARD_BORDE):
+    sombra = rect.move(4, 5)
+    pygame.draw.rect(pantalla, CARD_SOMBRA, sombra, border_radius=9)
+    pygame.draw.rect(pantalla, fondo, rect, border_radius=9)
+    pygame.draw.rect(pantalla, borde, rect, 2, border_radius=9)
+
+
 def color_hp(porcentaje):
     if porcentaje > 0.5:
         return VERDE_HP
@@ -107,12 +128,12 @@ def color_hp(porcentaje):
 def dibujar_barra_hp(pantalla, x, y, pokemon, ancho=180, alto=16):
     porcentaje = pokemon.hp_actual / pokemon.hp_max
 
-    pygame.draw.rect(pantalla, NEGRO, (x, y, ancho, alto), border_radius=4)
+    pygame.draw.rect(pantalla, (38, 45, 48), (x, y, ancho, alto), border_radius=5)
     pygame.draw.rect(
         pantalla,
         color_hp(porcentaje),
         (x + 2, y + 2, int((ancho - 4) * porcentaje), alto - 4),
-        border_radius=4,
+        border_radius=5,
     )
 
 
@@ -136,15 +157,12 @@ def dibujar_escenario(pantalla):
 
 def dibujar_panel_pokemon(pantalla, fuente, fuente_pequena, x, y, pokemon):
     rect = pygame.Rect(x, y, 300, 84)
-    sombra = rect.move(4, 4)
-    pygame.draw.rect(pantalla, (80, 120, 90), sombra, border_radius=8)
-    pygame.draw.rect(pantalla, BLANCO, rect, border_radius=8)
-    pygame.draw.rect(pantalla, GRIS_BORDE, rect, 2, border_radius=8)
+    dibujar_card(pantalla, rect)
 
-    nombre = fuente.render(pokemon.nombre, True, NEGRO)
-    etiqueta_hp = fuente_pequena.render("HP", True, NEGRO)
+    nombre = fuente.render(pokemon.nombre, True, TEXTO_SUAVE)
+    etiqueta_hp = fuente_pequena.render("HP", True, (227, 178, 44))
     hp = fuente_pequena.render(
-        f"{pokemon.hp_actual}/{pokemon.hp_max}", True, NEGRO)
+        f"{pokemon.hp_actual}/{pokemon.hp_max}", True, TEXTO_SUAVE)
 
     pantalla.blit(nombre, (x + 16, y + 10))
     pantalla.blit(etiqueta_hp, (x + 18, y + 48))
@@ -242,19 +260,17 @@ def dibujar_indicadores_equipo(pantalla, equipo, x, y):
 
 
 def dibujar_log(pantalla, fuente, mensajes):
-    pygame.draw.rect(pantalla, BLANCO, LOG_RECT, border_radius=8)
-    pygame.draw.rect(pantalla, GRIS_BORDE, LOG_RECT, 2, border_radius=8)
+    dibujar_card(pantalla, LOG_RECT, fondo=PANEL_FONDO)
 
     for indice, linea in enumerate(mensajes[-4:]):
         linea_visible = ajustar_texto(linea, fuente, LOG_RECT.width - 32)
-        texto_mensaje = fuente.render(linea_visible, True, NEGRO)
+        texto_mensaje = fuente.render(linea_visible, True, TEXTO_SUAVE)
         pantalla.blit(texto_mensaje, (LOG_RECT.x + 16,
                       LOG_RECT.y + 14 + indice * 28))
 
 
 def dibujar_panel_comandos(pantalla):
-    pygame.draw.rect(pantalla, BLANCO, COMANDOS_RECT, border_radius=8)
-    pygame.draw.rect(pantalla, GRIS_BORDE, COMANDOS_RECT, 2, border_radius=8)
+    dibujar_card(pantalla, COMANDOS_RECT, fondo=PANEL_FONDO)
 
 
 def crear_botones_movimientos(equipo):
@@ -318,14 +334,23 @@ def agregar_mensajes(historial, nuevos_mensajes):
     return historial[-4:]
 
 
+def crear_fuente(nombres, tamano, negrita=False):
+    for nombre in nombres:
+        fuente_disponible = pygame.font.match_font(nombre)
+        if fuente_disponible:
+            return pygame.font.Font(fuente_disponible, tamano)
+
+    return pygame.font.SysFont("arial", tamano, bold=negrita)
+
+
 def main():
     pygame.init()
     pantalla = pygame.display.set_mode((ANCHO, ALTO))
     pygame.display.set_caption("Pokefisi - Batalla")
     reloj = pygame.time.Clock()
-    fuente = pygame.font.SysFont("arial", 22)
-    fuente_pequena = pygame.font.SysFont("arial", 16)
-    fuente_grande = pygame.font.SysFont("arial", 42, bold=True)
+    fuente = crear_fuente(["segoeui", "arial"], 21)
+    fuente_pequena = crear_fuente(["segoeui", "arial"], 15)
+    fuente_grande = crear_fuente(["segoeuisemibold", "arial"], 42, negrita=True)
     sprites = cargar_sprites()
 
     equipo_jugador, equipo_rival = crear_equipos()
