@@ -1,65 +1,181 @@
-from Modelos.Pokemon import Pokemon
+from Batalla.Combate import turno_acciones
+from IA.Agentes import AgenteAleatorio, AgenteHeuristico
+from Modelos.Equipo import Equipo
 from Modelos.Movimiento import Movimiento
-from Batalla.Combate import turno
-from IA.Heuristicas import elegir_mejor_movimiento
-import random
-
-# crear movimientos
-rayo_carga = Movimiento("Rayo Carga", 50, 0.95, "electrico")
-placaje_electrico = Movimiento("Placaje Eléctrico", 90, 1.0, "electrico")
-golpe_cuerpo = Movimiento("Golpe Cuerpo", 85, 1.0, "normal")
-placaje = Movimiento("Placaje", 35, 1.0, "normal")
-rayo_solar = Movimiento("Rayo Solar", 120, 0.8, "planta")
-energibola = Movimiento("Energibola", 90, 0.9, "planta")
-
-# crear pokémon
-p1 = Pokemon("Pikachu", 60, 55, 40, 90, "electrico")
-p2 = Pokemon("Bulbasaur", 60, 50, 45, 40, "planta")
-p3 = Pokemon("Charmander", 60, 52, 43, 65, "fuego")
-p4 = Pokemon("Squirtle", 60, 48, 65, 43, "agua")
-
-# asignar movimientos
-p1.aprender_movimiento(rayo_carga)
-p1.aprender_movimiento(placaje)
-p1.aprender_movimiento(golpe_cuerpo)
-p1.aprender_movimiento(placaje_electrico)
+from Modelos.Pokemon import Pokemon
 
 
-p2.aprender_movimiento(placaje)
-p2.aprender_movimiento(rayo_solar)
-p2.aprender_movimiento(energibola)
-p2.aprender_movimiento(golpe_cuerpo)
+def crear_movimientos():
+    return {
+        "rayo_carga": Movimiento("Rayo Carga", 50, 0.95, "electrico"),
+        "placaje_electrico": Movimiento("Placaje Electrico", 90, 1.0, "electrico"),
+        "golpe_cuerpo": Movimiento("Golpe Cuerpo", 85, 1.0, "normal"),
+        "placaje": Movimiento("Placaje", 35, 1.0, "normal"),
+        "rayo_solar": Movimiento("Rayo Solar", 120, 0.8, "planta"),
+        "energibola": Movimiento("Energibola", 90, 0.9, "planta"),
+        "ascuas": Movimiento("Ascuas", 40, 1.0, "fuego"),
+        "pistola_agua": Movimiento("Pistola Agua", 40, 1.0, "agua"),
+    }
 
-# combate
-while p1.esta_vivo() and p2.esta_vivo():
-    mov1 = elegir_mejor_movimiento(p1, p2)
-    mov2 = random.choice(p2.movimientos)
 
-    print(f"\n--- TURNO ---")
-    print(f"{p1.nombre}: {p1.hp_actual} HP")
-    print(f"{p2.nombre}: {p2.hp_actual} HP")
+def crear_pokemon(nombre, hp, ataque, defensa, velocidad, tipo, movimientos):
+    pokemon = Pokemon(nombre, hp, ataque, defensa, velocidad, tipo)
 
-    eventos = turno(p1, p2, mov1, mov2)
+    for movimiento in movimientos:
+        pokemon.aprender_movimiento(movimiento)
 
-    # 👉 imprimir lo que pasó en el turno
-    for e in eventos:
-        if e["fallo"]:
-            print(f"{e['atacante']} usó {e['movimiento']}... ¡falló!")
+    return pokemon
+
+
+def crear_equipos():
+    mov = crear_movimientos()
+
+    pikachu = crear_pokemon(
+        "Pikachu",
+        60,
+        55,
+        40,
+        90,
+        "electrico",
+        [mov["rayo_carga"], mov["placaje"], mov["golpe_cuerpo"], mov["placaje_electrico"]],
+    )
+    charmander = crear_pokemon(
+        "Charmander",
+        60,
+        52,
+        43,
+        65,
+        "fuego",
+        [mov["ascuas"], mov["placaje"], mov["golpe_cuerpo"]],
+    )
+    squirtle = crear_pokemon(
+        "Squirtle",
+        60,
+        48,
+        65,
+        43,
+        "agua",
+        [mov["pistola_agua"], mov["placaje"], mov["golpe_cuerpo"]],
+    )
+
+    bulbasaur = crear_pokemon(
+        "Bulbasaur",
+        60,
+        50,
+        45,
+        40,
+        "planta",
+        [mov["placaje"], mov["rayo_solar"], mov["energibola"], mov["golpe_cuerpo"]],
+    )
+    charmander_rival = crear_pokemon(
+        "Charmander Rival",
+        60,
+        52,
+        43,
+        65,
+        "fuego",
+        [mov["ascuas"], mov["placaje"], mov["golpe_cuerpo"]],
+    )
+    squirtle_rival = crear_pokemon(
+        "Squirtle Rival",
+        60,
+        48,
+        65,
+        43,
+        "agua",
+        [mov["pistola_agua"], mov["placaje"], mov["golpe_cuerpo"]],
+    )
+
+    equipo_jugador = Equipo("Heuristico", [pikachu, charmander, squirtle])
+    equipo_rival = Equipo("Aleatorio", [bulbasaur, charmander_rival, squirtle_rival])
+
+    return equipo_jugador, equipo_rival
+
+
+def mostrar_estado(equipo):
+    activo = equipo.pokemon_activo()
+    print(f"{equipo.nombre}: {activo.nombre} ({activo.hp_actual}/{activo.hp_max} HP)")
+
+
+def mostrar_evento(evento):
+    if evento["tipo"] == "cambio":
+        if evento["exitoso"]:
+            print(
+                f"{evento['equipo']} cambio de {evento['pokemon_anterior']} "
+                f"a {evento['pokemon_nuevo']}"
+            )
         else:
-            print(f"{e['atacante']} usó {e['movimiento']} e hizo {e['daño']} daño")
+            print(f"{evento['equipo']} intento cambiar, pero no pudo")
+        return
 
-            if e["mult"] > 1:
-                print("¡Es súper efectivo!")
-            elif e["mult"] < 1:
-                print("No es muy efectivo...")
+    if evento["fallo"]:
+        movimiento = evento.get("movimiento", "un movimiento")
+        print(f"{evento['atacante']} uso {movimiento}... fallo")
+        return
 
-    # 👉 estado final del turno
-    print(f"{p1.nombre}: {p1.hp_actual} HP")
-    print(f"{p2.nombre}: {p2.hp_actual} HP")
+    print(
+        f"{evento['atacante']} uso {evento['movimiento']} "
+        f"e hizo {evento['daño']} daño"
+    )
 
-print("\n=== RESULTADO ===")
+    if evento["mult"] > 1:
+        print("Es super efectivo")
+    elif evento["mult"] < 1:
+        print("No es muy efectivo")
 
-if p1.esta_vivo():
-    print(f"Gana {p1.nombre}")
-else:
-    print(f"Gana {p2.nombre}")
+
+def revisar_pokemon_debilitado(equipo, equipo_rival, agente):
+    if equipo.pokemon_activo().esta_vivo():
+        return
+
+    reemplazo = agente.elegir_reemplazo(equipo, equipo_rival)
+
+    if reemplazo is not None:
+        pokemon_anterior = equipo.pokemon_activo().nombre
+        equipo.cambiar_a(reemplazo)
+        pokemon_nuevo = equipo.pokemon_activo().nombre
+        print(f"{equipo.nombre} envia a {pokemon_nuevo} porque {pokemon_anterior} cayo")
+
+
+def ejecutar_demo_consola():
+    equipo_jugador, equipo_rival = crear_equipos()
+    agente_jugador = AgenteHeuristico()
+    agente_rival = AgenteAleatorio()
+    turno_numero = 1
+
+    while equipo_jugador.tiene_pokemon_vivos() and equipo_rival.tiene_pokemon_vivos():
+        print(f"\n--- TURNO {turno_numero} ---")
+        mostrar_estado(equipo_jugador)
+        mostrar_estado(equipo_rival)
+
+        accion_jugador = agente_jugador.elegir_accion(equipo_jugador, equipo_rival)
+        accion_rival = agente_rival.elegir_accion(equipo_rival, equipo_jugador)
+
+        eventos = turno_acciones(equipo_jugador, equipo_rival, accion_jugador, accion_rival)
+
+        for evento in eventos:
+            mostrar_evento(evento)
+
+        revisar_pokemon_debilitado(
+            equipo_jugador,
+            equipo_rival,
+            agente_jugador,
+        )
+        revisar_pokemon_debilitado(
+            equipo_rival,
+            equipo_jugador,
+            agente_rival,
+        )
+
+        turno_numero += 1
+
+    print("\n=== RESULTADO ===")
+
+    if equipo_jugador.tiene_pokemon_vivos():
+        print(f"Gana {equipo_jugador.nombre}")
+    else:
+        print(f"Gana {equipo_rival.nombre}")
+
+
+if __name__ == "__main__":
+    ejecutar_demo_consola()
