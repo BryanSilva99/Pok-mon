@@ -54,3 +54,7 @@ class Equipo:
                 return pokemon
 
         return None
+
+    def copiar(self):
+        import copy
+        return copy.deepcopy(self)
