@@ -1,8 +1,14 @@
-from IA.Agentes import AgenteAleatorio, AgenteHeuristico, AgenteMinimax
+from IA.Agentes import (
+    AgenteAleatorio,
+    AgenteHeuristico,
+    AgenteHeuristicoAvanzado,
+    AgenteMinimax,
+)
 from Experimentos.Simulador import ejecutar_serie
 
 
 PARTIDAS = 100
+PARTIDAS_PROFUNDIDAD = 10
 
 
 def mostrar_resumen(resultado):
@@ -51,6 +57,18 @@ def ejecutar_comparaciones():
             "Minimax p2",
             "Heuristico",
         ),
+        (
+            lambda: AgenteHeuristicoAvanzado(),
+            lambda: AgenteAleatorio(),
+            "Heuristico avanzado",
+            "Random",
+        ),
+        (
+            lambda: AgenteHeuristicoAvanzado(),
+            lambda: AgenteHeuristico(),
+            "Heuristico avanzado",
+            "Heuristico",
+        ),
     ]
 
     print("=== COMPARACION DE AGENTES ===")
@@ -67,7 +85,10 @@ def ejecutar_comparaciones():
 
 
 def ejecutar_prueba_profundidad():
-    print("\n=== IMPACTO DE PROFUNDIDAD MINIMAX VS RANDOM ===")
+    print(
+        "\n=== IMPACTO DE PROFUNDIDAD MINIMAX VS RANDOM "
+        f"({PARTIDAS_PROFUNDIDAD} partidas por profundidad) ==="
+    )
 
     for profundidad in [1, 2, 3]:
         resultado = ejecutar_serie(
@@ -75,7 +96,7 @@ def ejecutar_prueba_profundidad():
             lambda: AgenteAleatorio(),
             f"Minimax p{profundidad}",
             "Random",
-            partidas=PARTIDAS,
+            partidas=PARTIDAS_PROFUNDIDAD,
         )
         mostrar_resumen(resultado)
 
