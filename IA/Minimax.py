@@ -1,5 +1,5 @@
-from IA.Heuristicas import acciones_disponibles, mejor_daño_esperado
 from Batalla.Danio import calcular_daño
+from IA.Heuristicas import acciones_disponibles, mejor_daño_esperado
 
 
 INFINITO = 10**9
@@ -9,7 +9,7 @@ PESO_AMENAZA = 0.4
 
 
 def elegir_accion_minimax(equipo, equipo_rival, profundidad=2):
-    acciones = acciones_disponibles(equipo)
+    acciones = acciones_busqueda(equipo)
 
     if not acciones:
         return None
@@ -17,20 +17,15 @@ def elegir_accion_minimax(equipo, equipo_rival, profundidad=2):
     mejor_accion = acciones[0]
     mejor_score = -INFINITO
     alfa = -INFINITO
-    beta = INFINITO
 
     for accion in acciones:
-        equipo_simulado = equipo.copiar()
-        rival_simulado = equipo_rival.copiar()
-
-        aplicar_accion_deterministica(equipo_simulado, rival_simulado, accion)
-        score = minimax(
-            equipo_simulado,
-            rival_simulado,
-            profundidad - 1,
-            maximizando=False,
-            alfa=alfa,
-            beta=beta,
+        score = evaluar_respuestas_rival(
+            equipo,
+            equipo_rival,
+            accion,
+            profundidad,
+            alfa,
+            INFINITO,
         )
 
         if score > mejor_score:
@@ -42,79 +37,132 @@ def elegir_accion_minimax(equipo, equipo_rival, profundidad=2):
     return mejor_accion
 
 
-def minimax(equipo_ia, equipo_rival, profundidad, maximizando, alfa, beta):
+def minimax(equipo_ia, equipo_rival, profundidad, alfa, beta):
     if profundidad == 0 or batalla_terminada(equipo_ia, equipo_rival):
         return evaluar_estado(equipo_ia, equipo_rival)
 
-    if maximizando:
-        mejor_score = -INFINITO
+    acciones_ia = acciones_busqueda(equipo_ia)
+    if not acciones_ia:
+        return evaluar_estado(equipo_ia, equipo_rival)
 
-        for accion in acciones_disponibles(equipo_ia):
-            equipo_simulado = equipo_ia.copiar()
-            rival_simulado = equipo_rival.copiar()
-            aplicar_accion_deterministica(equipo_simulado, rival_simulado, accion)
+    mejor_score = -INFINITO
 
-            score = minimax(
-                equipo_simulado,
-                rival_simulado,
-                profundidad - 1,
-                maximizando=False,
-                alfa=alfa,
-                beta=beta,
-            )
-            mejor_score = max(mejor_score, score)
-            alfa = max(alfa, mejor_score)
-
-            if beta <= alfa:
-                break
-
-        return mejor_score
-
-    mejor_score = INFINITO
-
-    for accion in acciones_disponibles(equipo_rival):
-        equipo_simulado = equipo_ia.copiar()
-        rival_simulado = equipo_rival.copiar()
-        aplicar_accion_deterministica(rival_simulado, equipo_simulado, accion)
-
-        score = minimax(
-            equipo_simulado,
-            rival_simulado,
-            profundidad - 1,
-            maximizando=True,
-            alfa=alfa,
-            beta=beta,
+    for accion_ia in acciones_ia:
+        score = evaluar_respuestas_rival(
+            equipo_ia,
+            equipo_rival,
+            accion_ia,
+            profundidad,
+            alfa,
+            beta,
         )
-        mejor_score = min(mejor_score, score)
-        beta = min(beta, mejor_score)
+        mejor_score = max(mejor_score, score)
+        alfa = max(alfa, mejor_score)
 
-        if beta <= alfa:
+        if alfa >= beta:
             break
 
     return mejor_score
 
 
-def aplicar_accion_deterministica(equipo, equipo_rival, accion):
-    if accion.tipo == "cambiar":
-        equipo.cambiar_a(accion.indice)
-        return
+def evaluar_respuestas_rival(
+    equipo_ia,
+    equipo_rival,
+    accion_ia,
+    profundidad,
+    alfa,
+    beta,
+):
+    acciones_rival = acciones_busqueda(equipo_rival)
 
-    atacante = equipo.pokemon_activo()
-    defensor = equipo_rival.pokemon_activo()
+    if not acciones_rival:
+        return evaluar_estado(equipo_ia, equipo_rival)
 
+    peor_score = INFINITO
+
+    for accion_rival in acciones_rival:
+        equipo_simulado = equipo_ia.copiar()
+        rival_simulado = equipo_rival.copiar()
+        resolver_turno_deterministico(
+            equipo_simulado,
+            rival_simulado,
+            accion_ia,
+            accion_rival,
+        )
+
+        score = minimax(
+            equipo_simulado,
+            rival_simulado,
+            profundidad - 1,
+            alfa,
+            beta,
+        )
+        peor_score = min(peor_score, score)
+        beta = min(beta, peor_score)
+
+        if beta <= alfa:
+            break
+
+    return peor_score
+
+
+def acciones_busqueda(equipo):
+    acciones = acciones_disponibles(equipo)
+
+    if equipo.pokemon_activo().esta_vivo():
+        return [accion for accion in acciones if accion.tipo == "atacar"]
+
+    return [accion for accion in acciones if accion.tipo == "cambiar"]
+
+
+def resolver_turno_deterministico(equipo_ia, equipo_rival, accion_ia, accion_rival):
+    if accion_ia.tipo == "cambiar":
+        equipo_ia.cambiar_a(accion_ia.indice)
+
+    if accion_rival.tipo == "cambiar":
+        equipo_rival.cambiar_a(accion_rival.indice)
+
+    if accion_ia.tipo == "atacar" and accion_rival.tipo == "atacar":
+        pokemon_ia = equipo_ia.pokemon_activo()
+        pokemon_rival = equipo_rival.pokemon_activo()
+
+        if pokemon_ia.velocidad >= pokemon_rival.velocidad:
+            ejecutar_ataque_esperado(pokemon_ia, pokemon_rival, accion_ia.indice)
+
+            if pokemon_rival.esta_vivo():
+                ejecutar_ataque_esperado(pokemon_rival, pokemon_ia, accion_rival.indice)
+        else:
+            ejecutar_ataque_esperado(pokemon_rival, pokemon_ia, accion_rival.indice)
+
+            if pokemon_ia.esta_vivo():
+                ejecutar_ataque_esperado(pokemon_ia, pokemon_rival, accion_ia.indice)
+
+    elif accion_ia.tipo == "atacar":
+        ejecutar_ataque_esperado(
+            equipo_ia.pokemon_activo(),
+            equipo_rival.pokemon_activo(),
+            accion_ia.indice,
+        )
+
+    elif accion_rival.tipo == "atacar":
+        ejecutar_ataque_esperado(
+            equipo_rival.pokemon_activo(),
+            equipo_ia.pokemon_activo(),
+            accion_rival.indice,
+        )
+
+
+def ejecutar_ataque_esperado(atacante, defensor, indice_movimiento):
     if not atacante.esta_vivo():
         return
 
-    if accion.indice < 0 or accion.indice >= len(atacante.movimientos):
+    if indice_movimiento < 0 or indice_movimiento >= len(atacante.movimientos):
         return
 
-    movimiento = atacante.movimientos[accion.indice]
+    movimiento = atacante.movimientos[indice_movimiento]
     daño = calcular_daño(atacante, defensor, movimiento)
-    daño_esperado = int(daño * movimiento.precision)
-    defensor.recibir_daño(max(1, daño_esperado))
-
-    if not defensor.esta_vivo():
-        equipo_rival.seleccionar_siguiente_vivo()
+    daño_esperado = max(1, int(daño * movimiento.precision))
+    defensor.recibir_daño(daño_esperado)
 
 
 def evaluar_estado(equipo_ia, equipo_rival):
@@ -128,14 +176,34 @@ def evaluar_estado(equipo_ia, equipo_rival):
     hp_rival = hp_total(equipo_rival)
     vivos_ia = len(equipo_ia.pokemons_vivos())
     vivos_rival = len(equipo_rival.pokemons_vivos())
-    amenaza_ia = mejor_daño_esperado(equipo_ia.pokemon_activo(), equipo_rival.pokemon_activo())
-    amenaza_rival = mejor_daño_esperado(equipo_rival.pokemon_activo(), equipo_ia.pokemon_activo())
+    amenaza_ia = amenaza_activa(equipo_ia, equipo_rival)
+    amenaza_rival = amenaza_activa(equipo_rival, equipo_ia)
 
     return (
         (hp_ia - hp_rival) * PESO_HP
         + (vivos_ia - vivos_rival) * PESO_POKEMON_VIVO
         + (amenaza_ia - amenaza_rival) * PESO_AMENAZA
     )
+
+
+def amenaza_activa(equipo_atacante, equipo_defensor):
+    atacante = pokemon_disponible(equipo_atacante)
+    defensor = pokemon_disponible(equipo_defensor)
+
+    if atacante is None or defensor is None:
+        return 0
+
+    return mejor_daño_esperado(atacante, defensor)
+
+
+def pokemon_disponible(equipo):
+    activo = equipo.pokemon_activo()
+
+    if activo.esta_vivo():
+        return activo
+
+    vivos = equipo.pokemons_vivos()
+    return vivos[0] if vivos else None
 
 
 def hp_total(equipo):
