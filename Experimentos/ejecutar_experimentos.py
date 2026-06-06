@@ -3,6 +3,7 @@ from IA.Agentes import (
     AgenteHeuristico,
     AgenteHeuristicoAvanzado,
     AgenteMinimax,
+    AgenteOptimizado,
 )
 from Experimentos.Simulador import ejecutar_serie
 
@@ -68,6 +69,12 @@ def ejecutar_comparaciones():
             lambda: AgenteHeuristico(),
             "Heuristico avanzado",
             "Heuristico",
+        ),
+        (
+            lambda: AgenteOptimizado(),
+            lambda: AgenteHeuristicoAvanzado(),
+            "Optimizado",
+            "Avanzado manual",
         ),
     ]
 

@@ -1,4 +1,5 @@
 from Batalla.Combate import turno_acciones
+from Datos.PokemonDataset import crear_equipo_aleatorio
 from IA.Agentes import AgenteAleatorio, AgenteHeuristico
 from Modelos.Equipo import Equipo
 from Modelos.Movimiento import Movimiento
@@ -28,6 +29,17 @@ def crear_pokemon(nombre, hp, ataque, defensa, velocidad, tipo, movimientos):
 
 
 def crear_equipos():
+    return crear_equipos_desde_dataset()
+
+
+def crear_equipos_desde_dataset(tamano_equipo=3):
+    equipo_jugador = crear_equipo_aleatorio("Heuristico", tamano_equipo)
+    equipo_rival = crear_equipo_aleatorio("Aleatorio", tamano_equipo)
+
+    return equipo_jugador, equipo_rival
+
+
+def crear_equipos_demo_original():
     mov = crear_movimientos()
 
     pikachu = crear_pokemon(

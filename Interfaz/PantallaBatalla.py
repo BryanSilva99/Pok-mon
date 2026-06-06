@@ -4,8 +4,8 @@ import pygame
 from PIL import Image, ImageSequence
 
 from Batalla.Combate import turno_acciones
-from IA.Agentes import AgenteAleatorio
-from main import crear_equipos
+from Datos.PokemonDataset import catalogo_pokemon, crear_equipo_desde_nombres
+from IA.Agentes import AgenteHeuristico
 from Modelos.Accion import Accion
 
 RAIZ_PROYECTO = Path(__file__).resolve().parents[1]
@@ -31,6 +31,8 @@ POSICIONES_BOTONES = [
     (BOTON_X_2, BOTON_Y_2, BOTON_ANCHO, BOTON_ALTO),
 ]
 BOTON_SECUNDARIO = (BOTON_X_1, BOTON_Y_3, BOTON_ANCHO, BOTON_ALTO)
+TAMANO_EQUIPO = 3
+IA_TURNO_MS = 900
 
 JUGADOR_PANEL_POS = (480, 305)
 RIVAL_PANEL_POS = (100, 32)
@@ -75,6 +77,38 @@ ROJO_HP = (220, 70, 70)
 AZUL_ACTIVO = (45, 120, 210)
 GRIS_DEBILITADO = (150, 150, 150)
 ROJO_POKEBOLA = (220, 65, 65)
+MENU_FONDO = (224, 235, 240)
+MENU_PANEL = (247, 248, 241)
+MENU_TINTA = (32, 44, 54)
+MENU_MUTED = (88, 104, 116)
+MENU_ACCENTO = (238, 72, 64)
+MENU_ACCENTO_OSCURO = (188, 52, 48)
+MENU_AZUL = (66, 144, 214)
+MENU_VERDE = (72, 168, 113)
+MENU_AMARILLO = (246, 202, 75)
+MENU_CARD = (255, 252, 240)
+MENU_CARD_ALT = (238, 246, 255)
+
+COLORES_TIPO = {
+    "normal": (170, 170, 145),
+    "fuego": (238, 126, 60),
+    "agua": (82, 142, 232),
+    "electrico": (240, 196, 58),
+    "planta": (92, 178, 86),
+    "hielo": (116, 198, 214),
+    "lucha": (190, 76, 62),
+    "veneno": (160, 96, 168),
+    "tierra": (210, 170, 86),
+    "volador": (138, 162, 226),
+    "psiquico": (228, 92, 132),
+    "bicho": (156, 178, 54),
+    "roca": (176, 150, 82),
+    "fantasma": (112, 94, 154),
+    "dragon": (108, 92, 214),
+    "siniestro": (96, 78, 68),
+    "acero": (154, 162, 178),
+    "hada": (230, 136, 192),
+}
 
 SPRITES = {
     "Pikachu": {"front": "pikachu.gif", "back": "pikachu_back.gif"},
@@ -83,6 +117,36 @@ SPRITES = {
     "Charmander Rival": {"front": "charmander.gif", "back": "charmander_back.gif"},
     "Squirtle": {"front": "squirtle.gif", "back": "squirtle_back.gif"},
     "Squirtle Rival": {"front": "squirtle.gif", "back": "squirtle_back.gif"},
+    "Garchomp": {"front": "garchomp.png", "back": "garchomp_back.png"},
+    "Tyranitar": {"front": "tyranitar.png", "back": "tyranitar_back.png"},
+    "Venusaur": {"front": "venusaur.png", "back": "venusaur_back.png"},
+    "Charizard": {"front": "charizard.png", "back": "charizard_back.png"},
+    "Blastoise": {"front": "blastoise.png", "back": "blastoise_back.png"},
+    "Gengar": {"front": "gengar.png", "back": "gengar_back.png"},
+    "Alakazam": {"front": "alakazam.png", "back": "alakazam_back.png"},
+    "Dragonite": {"front": "dragonite.png", "back": "dragonite_back.png"},
+    "Arcanine": {"front": "arcanine.png", "back": "arcanine_back.png"},
+    "Jigglypuff": {"front": "jigglypuff.png", "back": "jigglypuff_back.png"},
+    "Gallade": {"front": "gallade.png", "back": "gallade_back.png"},
+    "Lucario": {"front": "lucario.png", "back": "lucario_back.png"},
+    "Gyarados": {"front": "gyarados.png", "back": "gyarados_back.png"},
+    "Salamence": {"front": "salamence.png", "back": "salamence_back.png"},
+    "Raichu": {"front": "raichu.png", "back": "raichu_back.png"},
+    "Scizor": {"front": "scizor.png", "back": "scizor_back.png"},
+    "Snorlax": {"front": "snorlax.png", "back": "snorlax_back.png"},
+    "Metagross": {"front": "metagross.png", "back": "metagross_back.png"},
+    "Sceptile": {"front": "sceptile.png", "back": "sceptile_back.png"},
+    "Swampert": {"front": "swampert.png", "back": "swampert_back.png"},
+    "Blaziken": {"front": "blaziken.png", "back": "blaziken_back.png"},
+    "Torterra": {"front": "torterra.png", "back": "torterra_back.png"},
+    "Infernape": {"front": "infernape.png", "back": "infernape_back.png"},
+    "Empoleon": {"front": "empoleon.png", "back": "empoleon_back.png"},
+    "Crobat": {"front": "crobat.png", "back": "crobat_back.png"},
+    "Azumarill": {"front": "azumarill.png", "back": "azumarill_back.png"},
+    "Vaporeon": {"front": "vaporeon.png", "back": "vaporeon_back.png"},
+    "Flareon": {"front": "flareon.png", "back": "flareon_back.png"},
+    "Jolteon": {"front": "jolteon.png", "back": "jolteon_back.png"},
+    "Togekiss": {"front": "togekiss.png", "back": "togekiss_back.png"},
 }
 
 
@@ -247,6 +311,21 @@ def cargar_gif(ruta, escala=2):
     return frames
 
 
+def cargar_imagen(ruta, escala=2):
+    if ruta.suffix.lower() == ".gif":
+        return cargar_gif(ruta, escala)
+
+    imagen = Image.open(ruta).convert("RGBA")
+    ancho, alto = imagen.size
+    superficie = pygame.image.fromstring(
+        imagen.tobytes(), (ancho, alto), "RGBA").convert_alpha()
+    superficie = pygame.transform.scale(
+        superficie,
+        (ancho * escala, alto * escala),
+    )
+    return [superficie]
+
+
 def cargar_sprites():
     sprites = {}
     carpeta_sprites = RAIZ_PROYECTO / "Assets" / "Sprites"
@@ -257,7 +336,7 @@ def cargar_sprites():
         for orientacion, archivo in archivos.items():
             ruta = carpeta_sprites / archivo
             if ruta.exists():
-                sprites[nombre][orientacion] = cargar_gif(ruta)
+                sprites[nombre][orientacion] = cargar_imagen(ruta)
 
     return sprites
 
@@ -331,6 +410,11 @@ def dibujar_log(pantalla, fuente, mensajes):
 def dibujar_panel_comandos(pantalla):
     dibujar_card(pantalla, COMANDOS_RECT, fondo=PANEL_FONDO)
     pygame.draw.rect(pantalla, PANEL_LUZ, COMANDOS_RECT.inflate(-10, -10), 1, border_radius=6)
+
+
+def dibujar_texto(pantalla, fuente, texto, x, y, color=TEXTO_SUAVE):
+    superficie = obtener_texto_cacheado(fuente, texto, color)
+    pantalla.blit(superficie, (x, y))
 
 
 def crear_botones_movimientos(equipo):
@@ -441,6 +525,336 @@ def crear_fuente(nombres, tamano, negrita=False):
     return pygame.font.SysFont("arial", tamano, bold=negrita)
 
 
+def dibujar_boton_menu(pantalla, rect, texto, fuente, activo=True, primario=False):
+    mouse_encima = rect.collidepoint(pygame.mouse.get_pos())
+    fondo = MENU_ACCENTO if primario else MENU_CARD
+    borde = MENU_ACCENTO_OSCURO if primario else CARD_BORDE
+    texto_color = BLANCO if primario else MENU_TINTA
+
+    if not activo:
+        fondo = (210, 216, 220)
+        borde = (166, 174, 180)
+        texto_color = (110, 118, 124)
+    elif mouse_encima:
+        fondo = (255, 112, 96) if primario else (246, 251, 255)
+
+    pygame.draw.rect(pantalla, (70, 88, 98), rect.move(3, 4), border_radius=8)
+    pygame.draw.rect(pantalla, fondo, rect, border_radius=8)
+    pygame.draw.rect(pantalla, borde, rect, 2, border_radius=8)
+    superficie = obtener_texto_cacheado(fuente, texto, texto_color)
+    pantalla.blit(superficie, superficie.get_rect(center=rect.center))
+
+
+def dibujar_fondo_inicio(pantalla):
+    pantalla.fill((228, 238, 238))
+    pygame.draw.rect(pantalla, (118, 188, 220), (0, 0, ANCHO, 210))
+    pygame.draw.rect(pantalla, (162, 218, 148), (0, 210, ANCHO, 250))
+    pygame.draw.rect(pantalla, (96, 168, 116), (0, 430, ANCHO, 170))
+    pygame.draw.circle(pantalla, (250, 250, 250), (720, 120), 52)
+    pygame.draw.circle(pantalla, (238, 72, 64), (720, 120), 52, 0)
+    pygame.draw.rect(pantalla, (250, 250, 250), (668, 120, 104, 52))
+    pygame.draw.circle(pantalla, (48, 58, 65), (720, 120), 18)
+    pygame.draw.circle(pantalla, (250, 250, 250), (720, 120), 9)
+
+
+def dibujar_tipo_chip(pantalla, fuente, tipo, x, y):
+    color = COLORES_TIPO.get(tipo, (160, 160, 160))
+    rect = pygame.Rect(x, y, 50, 17)
+    pygame.draw.rect(pantalla, color, rect, border_radius=8)
+    texto = obtener_texto_cacheado(fuente, tipo, BLANCO)
+    pantalla.blit(texto, texto.get_rect(center=rect.center))
+
+
+SPRITES_TARJETA_CACHE = {}
+
+
+def obtener_sprite_tarjeta(sprites, nombre, tamano=42):
+    clave = (nombre, tamano)
+    if clave in SPRITES_TARJETA_CACHE:
+        return SPRITES_TARJETA_CACHE[clave]
+
+    frames = sprites.get(nombre, {}).get("front")
+    if not frames:
+        return None
+
+    sprite = frames[0]
+    rect = sprite.get_rect()
+    escala = min(tamano / rect.width, tamano / rect.height)
+    nuevo_tamano = (max(1, int(rect.width * escala)), max(1, int(rect.height * escala)))
+    sprite_escalado = pygame.transform.smoothscale(sprite, nuevo_tamano)
+    SPRITES_TARJETA_CACHE[clave] = sprite_escalado
+    return sprite_escalado
+
+
+class PantallaInicio:
+    def __init__(self):
+        self.boton = pygame.Rect(346, 418, 208, 52)
+
+    def manejar_evento(self, evento):
+        if evento.type == pygame.MOUSEBUTTONDOWN and self.boton.collidepoint(evento.pos):
+            return "modalidad"
+        if evento.type == pygame.KEYDOWN and evento.key in [pygame.K_RETURN, pygame.K_SPACE]:
+            return "modalidad"
+        return None
+
+    def dibujar(self, pantalla, fuentes, sprites):
+        fuente, fuente_pequena, fuente_grande, fuente_titulo = fuentes
+        dibujar_fondo_inicio(pantalla)
+
+        for nombre, x, y in [
+            ("Charizard", 170, 350),
+            ("Garchomp", 735, 360),
+            ("Pikachu", 106, 180),
+        ]:
+            sprite = obtener_sprite_tarjeta(sprites, nombre, 112)
+            if sprite:
+                pantalla.blit(sprite, sprite.get_rect(center=(x, y)))
+
+        titulo = obtener_texto_cacheado(fuente_titulo, "Pokefisi", MENU_TINTA)
+        subtitulo = obtener_texto_cacheado(
+            fuente,
+            "Simulacion estrategica de combates Pokemon",
+            MENU_TINTA,
+        )
+        pantalla.blit(titulo, titulo.get_rect(center=(ANCHO // 2, 230)))
+        pantalla.blit(subtitulo, subtitulo.get_rect(center=(ANCHO // 2, 300)))
+        dibujar_texto(pantalla, fuente_pequena, "Construye equipos, compara agentes y juega turnos tacticos.", 260, 342, MENU_MUTED)
+        dibujar_boton_menu(pantalla, self.boton, "Comenzar", fuente, primario=True)
+
+
+class PantallaModalidad:
+    def __init__(self):
+        self.modo = "player_ia"
+        self.tarjeta_p1 = pygame.Rect(112, 190, 300, 220)
+        self.tarjeta_ia = pygame.Rect(488, 190, 300, 220)
+        self.boton_volver = pygame.Rect(76, 510, 140, 42)
+        self.boton_continuar = pygame.Rect(666, 510, 160, 42)
+
+    def manejar_evento(self, evento):
+        if evento.type != pygame.MOUSEBUTTONDOWN:
+            return None
+
+        if self.tarjeta_p1.collidepoint(evento.pos):
+            self.modo = "player_ia"
+        elif self.tarjeta_ia.collidepoint(evento.pos):
+            self.modo = "ia_ia"
+        elif self.boton_volver.collidepoint(evento.pos):
+            return "inicio"
+        elif self.boton_continuar.collidepoint(evento.pos):
+            return "seleccion"
+
+        return None
+
+    def dibujar_tarjeta(self, pantalla, fuente, fuente_pequena, rect, titulo, descripcion, seleccionado, color):
+        fondo = (248, 252, 255) if seleccionado else MENU_CARD
+        borde = color if seleccionado else CARD_BORDE
+        pygame.draw.rect(pantalla, (74, 92, 102), rect.move(5, 6), border_radius=10)
+        pygame.draw.rect(pantalla, fondo, rect, border_radius=10)
+        pygame.draw.rect(pantalla, borde, rect, 4 if seleccionado else 2, border_radius=10)
+        pygame.draw.circle(pantalla, color, (rect.x + 58, rect.y + 58), 32)
+        pygame.draw.circle(pantalla, BLANCO, (rect.x + 58, rect.y + 58), 13)
+        dibujar_texto(pantalla, fuente, titulo, rect.x + 34, rect.y + 104, MENU_TINTA)
+        dibujar_texto(pantalla, fuente_pequena, descripcion, rect.x + 34, rect.y + 144, MENU_MUTED)
+        estado = "Seleccionado" if seleccionado else "Elegir"
+        dibujar_texto(pantalla, fuente_pequena, estado, rect.x + 34, rect.y + 178, color)
+
+    def dibujar(self, pantalla, fuentes, sprites):
+        fuente, fuente_pequena, fuente_grande, _ = fuentes
+        pantalla.fill(MENU_FONDO)
+        dibujar_texto(pantalla, fuente_grande, "Elige modalidad", 76, 70, MENU_TINTA)
+        dibujar_texto(pantalla, fuente, "Define quien tomara decisiones en combate.", 80, 126, MENU_MUTED)
+        self.dibujar_tarjeta(
+            pantalla,
+            fuente,
+            fuente_pequena,
+            self.tarjeta_p1,
+            "P1 vs IA",
+            "Control manual contra agente heuristico.",
+            self.modo == "player_ia",
+            MENU_AZUL,
+        )
+        self.dibujar_tarjeta(
+            pantalla,
+            fuente,
+            fuente_pequena,
+            self.tarjeta_ia,
+            "IA vs IA",
+            "Dos agentes combaten automaticamente.",
+            self.modo == "ia_ia",
+            MENU_VERDE,
+        )
+        dibujar_boton_menu(pantalla, self.boton_volver, "Volver", fuente_pequena)
+        dibujar_boton_menu(pantalla, self.boton_continuar, "Continuar", fuente_pequena, primario=True)
+
+
+class PantallaSeleccion:
+    def __init__(self):
+        self.catalogo = catalogo_pokemon()
+        self.modo = "player_ia"
+        self.equipo_activo = "equipo1"
+        self.equipo1 = []
+        self.equipo2 = []
+        self.mensaje = "Selecciona 3 Pokemon para Equipo 1."
+        self.boton_volver = pygame.Rect(24, 540, 104, 36)
+        self.boton_limpiar = pygame.Rect(142, 540, 112, 36)
+        self.boton_confirmar = pygame.Rect(268, 540, 132, 36)
+        self.boton_iniciar = pygame.Rect(704, 540, 156, 36)
+        self.boton_equipo1 = pygame.Rect(24, 132, 116, 34)
+        self.boton_equipo2 = pygame.Rect(152, 132, 116, 34)
+
+    def configurar(self, modo):
+        self.modo = modo
+        self.mensaje = "Selecciona 3 Pokemon para Equipo 1."
+
+    def seleccion_actual(self):
+        return self.equipo1 if self.equipo_activo == "equipo1" else self.equipo2
+
+    def seleccion_opuesta(self):
+        return self.equipo2 if self.equipo_activo == "equipo1" else self.equipo1
+
+    def esta_listo(self):
+        return len(self.equipo1) == TAMANO_EQUIPO and len(self.equipo2) == TAMANO_EQUIPO
+
+    def card_rect(self, indice):
+        columna = indice % 6
+        fila = indice // 6
+        return pygame.Rect(304 + columna * 93, 116 + fila * 82, 84, 74)
+
+    def manejar_evento(self, evento):
+        if evento.type != pygame.MOUSEBUTTONDOWN:
+            return None
+
+        if self.boton_volver.collidepoint(evento.pos):
+            return "modalidad"
+        if self.boton_equipo1.collidepoint(evento.pos):
+            self.equipo_activo = "equipo1"
+            self.mensaje = "Editando Equipo 1."
+            return None
+        if self.boton_equipo2.collidepoint(evento.pos):
+            self.equipo_activo = "equipo2"
+            self.mensaje = "Editando Equipo 2."
+            return None
+        if self.boton_limpiar.collidepoint(evento.pos):
+            self.seleccion_actual().clear()
+            self.mensaje = "Equipo limpio."
+            return None
+        if self.boton_confirmar.collidepoint(evento.pos):
+            if len(self.seleccion_actual()) != TAMANO_EQUIPO:
+                self.mensaje = "Completa los 3 slots antes de confirmar."
+            elif self.equipo_activo == "equipo1":
+                self.equipo_activo = "equipo2"
+                self.mensaje = "Equipo 1 confirmado. Selecciona Equipo 2."
+            else:
+                self.mensaje = "Equipo 2 confirmado. Puedes iniciar batalla."
+            return None
+        if self.boton_iniciar.collidepoint(evento.pos):
+            if self.esta_listo():
+                return "batalla"
+            self.mensaje = "Ambos equipos necesitan 3 Pokemon."
+            return None
+
+        for indice, dato in enumerate(self.catalogo):
+            if self.card_rect(indice).collidepoint(evento.pos):
+                self.toggle_pokemon(dato["nombre"])
+                return None
+
+        return None
+
+    def toggle_pokemon(self, nombre):
+        actual = self.seleccion_actual()
+        opuesta = self.seleccion_opuesta()
+
+        if nombre in actual:
+            actual.remove(nombre)
+            self.mensaje = f"{nombre} removido."
+        elif nombre in opuesta:
+            self.mensaje = f"{nombre} ya esta en el otro equipo."
+        elif len(actual) >= TAMANO_EQUIPO:
+            self.mensaje = "Ese equipo ya tiene 3 Pokemon."
+        else:
+            actual.append(nombre)
+            self.mensaje = f"{nombre} agregado."
+
+    def dibujar_slot(self, pantalla, fuente_pequena, sprites, rect, nombre, indice):
+        pygame.draw.rect(pantalla, (218, 228, 234), rect, border_radius=8)
+        pygame.draw.rect(pantalla, CARD_BORDE, rect, 2, border_radius=8)
+        if not nombre:
+            dibujar_texto(pantalla, fuente_pequena, f"Slot {indice + 1}", rect.x + 12, rect.y + 4, MENU_MUTED)
+            return
+
+        sprite = obtener_sprite_tarjeta(sprites, nombre, 32)
+        if sprite:
+            pantalla.blit(sprite, sprite.get_rect(center=(rect.x + 24, rect.centery)))
+        dibujar_texto(pantalla, fuente_pequena, nombre, rect.x + 48, rect.y + 4, MENU_TINTA)
+
+    def dibujar_equipo(self, pantalla, fuente, fuente_pequena, sprites, titulo, nombres, x, y, activo):
+        rect = pygame.Rect(x, y, 248, 116)
+        fondo = MENU_CARD_ALT if activo else MENU_CARD
+        dibujar_card(pantalla, rect, fondo=fondo, borde=MENU_AZUL if activo else CARD_BORDE)
+        dibujar_texto(pantalla, fuente, titulo, x + 14, y + 10, MENU_TINTA)
+        for indice in range(TAMANO_EQUIPO):
+            slot = pygame.Rect(x + 14, y + 42 + indice * 24, 218, 22)
+            nombre = nombres[indice] if indice < len(nombres) else None
+            self.dibujar_slot(pantalla, fuente_pequena, sprites, slot, nombre, indice)
+
+    def dibujar_card_pokemon(self, pantalla, fuente_mini, sprites, dato, rect):
+        nombre = dato["nombre"]
+        en_equipo1 = nombre in self.equipo1
+        en_equipo2 = nombre in self.equipo2
+        seleccionado = en_equipo1 or en_equipo2
+        bloqueado = seleccionado and nombre not in self.seleccion_actual()
+        fondo = (232, 246, 255) if seleccionado else MENU_CARD
+        borde = MENU_AZUL if en_equipo1 else MENU_VERDE if en_equipo2 else (120, 132, 142)
+
+        pygame.draw.rect(pantalla, (78, 92, 100), rect.move(2, 3), border_radius=8)
+        pygame.draw.rect(pantalla, fondo, rect, border_radius=8)
+        pygame.draw.rect(pantalla, borde, rect, 3 if seleccionado else 1, border_radius=8)
+        if bloqueado:
+            pygame.draw.rect(pantalla, (230, 230, 230), rect, 0, border_radius=8)
+
+        sprite = obtener_sprite_tarjeta(sprites, nombre, 36)
+        if sprite:
+            pantalla.blit(sprite, sprite.get_rect(center=(rect.centerx, rect.y + 25)))
+
+        texto = ajustar_texto(nombre, fuente_mini, rect.width - 8)
+        nombre_render = obtener_texto_cacheado(fuente_mini, texto, MENU_TINTA)
+        pantalla.blit(nombre_render, nombre_render.get_rect(center=(rect.centerx, rect.y + 49)))
+        chip_x = rect.x + 5
+        for tipo in dato["tipos"][:2]:
+            dibujar_tipo_chip(pantalla, fuente_mini, tipo, chip_x, rect.y + 56)
+            chip_x += 38
+
+    def dibujar(self, pantalla, fuentes, sprites):
+        fuente, fuente_pequena, fuente_grande, _ = fuentes
+        fuente_mini = crear_fuente(["segoeui", "arial"], 10)
+        pantalla.fill(MENU_FONDO)
+        dibujar_texto(pantalla, fuente_grande, "Seleccion de equipos", 24, 24, MENU_TINTA)
+        modo_texto = "P1 vs IA" if self.modo == "player_ia" else "IA vs IA"
+        dibujar_texto(pantalla, fuente_pequena, f"Modalidad: {modo_texto}", 28, 82, MENU_MUTED)
+
+        dibujar_boton_menu(pantalla, self.boton_equipo1, "Equipo 1", fuente_pequena, primario=self.equipo_activo == "equipo1")
+        dibujar_boton_menu(pantalla, self.boton_equipo2, "Equipo 2", fuente_pequena, primario=self.equipo_activo == "equipo2")
+        self.dibujar_equipo(pantalla, fuente_pequena, fuente_mini, sprites, "Equipo 1", self.equipo1, 24, 182, self.equipo_activo == "equipo1")
+        self.dibujar_equipo(pantalla, fuente_pequena, fuente_mini, sprites, "Equipo 2", self.equipo2, 24, 314, self.equipo_activo == "equipo2")
+
+        dibujar_texto(pantalla, fuente, "Disponibles", 304, 68, MENU_TINTA)
+        dibujar_texto(pantalla, fuente_pequena, self.mensaje, 304, 92, MENU_MUTED)
+        for indice, dato in enumerate(self.catalogo):
+            self.dibujar_card_pokemon(pantalla, fuente_mini, sprites, dato, self.card_rect(indice))
+
+        dibujar_boton_menu(pantalla, self.boton_volver, "Volver", fuente_pequena)
+        dibujar_boton_menu(pantalla, self.boton_limpiar, "Limpiar", fuente_pequena)
+        dibujar_boton_menu(pantalla, self.boton_confirmar, "Confirmar", fuente_pequena)
+        dibujar_boton_menu(
+            pantalla,
+            self.boton_iniciar,
+            "Iniciar batalla",
+            fuente_pequena,
+            activo=self.esta_listo(),
+            primario=True,
+        )
+
+
 def main():
     pygame.init()
     pantalla = pygame.display.set_mode((ANCHO, ALTO))
@@ -449,15 +863,113 @@ def main():
     fuente = crear_fuente(["segoeui", "arial"], 21)
     fuente_pequena = crear_fuente(["segoeui", "arial"], 15)
     fuente_grande = crear_fuente(["segoeuisemibold", "arial"], 42, negrita=True)
+    fuente_titulo = crear_fuente(["segoeuisemibold", "arial"], 74, negrita=True)
+    fuentes = (fuente, fuente_pequena, fuente_grande, fuente_titulo)
     sprites = cargar_sprites()
 
-    equipo_jugador, equipo_rival = crear_equipos()
-    agente_rival = AgenteAleatorio()
-    mensajes = ["Elige un movimiento"]
-    botones = crear_botones_movimientos(equipo_jugador)
+    pantalla_inicio = PantallaInicio()
+    pantalla_modalidad = PantallaModalidad()
+    pantalla_seleccion = PantallaSeleccion()
+    pantalla_actual = "inicio"
+    equipo_jugador = None
+    equipo_rival = None
+    agente_jugador = AgenteHeuristico()
+    agente_rival = AgenteHeuristico()
+    modo_juego = "player_ia"
+    mensajes = []
+    botones = []
     modo_interfaz = "movimientos"
     terminado = False
     corriendo = True
+    ultimo_turno_ia = 0
+
+    def iniciar_batalla():
+        nonlocal pantalla_actual, equipo_jugador, equipo_rival
+        nonlocal mensajes, botones, modo_interfaz, terminado, ultimo_turno_ia
+        nonlocal modo_juego
+
+        modo_juego = pantalla_modalidad.modo
+        nombre_jugador = "Player 1" if modo_juego == "player_ia" else "IA 1"
+        nombre_rival = "IA" if modo_juego == "player_ia" else "IA 2"
+        equipo_jugador = crear_equipo_desde_nombres(nombre_jugador, pantalla_seleccion.equipo1)
+        equipo_rival = crear_equipo_desde_nombres(nombre_rival, pantalla_seleccion.equipo2)
+        mensajes = ["Elige un movimiento"] if modo_juego == "player_ia" else ["Combate IA vs IA"]
+        botones = crear_botones_movimientos(equipo_jugador) if modo_juego == "player_ia" else []
+        modo_interfaz = "movimientos"
+        terminado = False
+        pantalla_actual = "batalla"
+        ultimo_turno_ia = pygame.time.get_ticks()
+
+    def volver_inicio():
+        nonlocal pantalla_actual, terminado
+        pantalla_actual = "inicio"
+        terminado = False
+
+    def finalizar_batalla(textos, ganador):
+        nonlocal terminado, botones, mensajes
+        textos.append(f"Gana {ganador}")
+        terminado = True
+        mensajes = agregar_mensajes(mensajes, textos)
+        botones = [Boton(BOTON_SECUNDARIO, "Inicio", "volver_inicio")]
+
+    def revisar_fin_o_reemplazos(textos, reemplazo_humano=False):
+        nonlocal botones, modo_interfaz
+
+        reemplazo_rival = elegir_reemplazo_ia_si_cayo(
+            equipo_rival,
+            equipo_jugador,
+            agente_rival,
+        )
+
+        if reemplazo_rival:
+            textos.append(reemplazo_rival)
+
+        if not equipo_jugador.tiene_pokemon_vivos():
+            finalizar_batalla(textos, equipo_rival.nombre)
+            return "finalizado"
+
+        if not equipo_rival.tiene_pokemon_vivos():
+            finalizar_batalla(textos, equipo_jugador.nombre)
+            return "finalizado"
+
+        if reemplazo_humano and not equipo_jugador.pokemon_activo().esta_vivo():
+            textos.append("Elige tu siguiente Pokemon")
+            botones = crear_botones_cambio(equipo_jugador, permitir_volver=False)
+            modo_interfaz = "reemplazo"
+            return "reemplazo"
+
+        return None
+
+    def ejecutar_turno_ia():
+        nonlocal mensajes, botones, modo_interfaz
+
+        if terminado:
+            return
+
+        accion_jugador = agente_jugador.elegir_accion(equipo_jugador, equipo_rival)
+        accion_rival = agente_rival.elegir_accion(equipo_rival, equipo_jugador)
+        eventos = turno_acciones(
+            equipo_jugador,
+            equipo_rival,
+            accion_jugador,
+            accion_rival,
+        )
+        textos = [mostrar_evento(e) for e in eventos]
+        reemplazo_jugador = elegir_reemplazo_ia_si_cayo(
+            equipo_jugador,
+            equipo_rival,
+            agente_jugador,
+        )
+
+        if reemplazo_jugador:
+            textos.append(reemplazo_jugador)
+
+        if revisar_fin_o_reemplazos(textos):
+            return
+
+        mensajes = agregar_mensajes(mensajes, textos)
+        botones = []
+        modo_interfaz = "ia"
 
     def manejar_boton(boton):
         nonlocal botones, mensajes, modo_interfaz, terminado
@@ -475,6 +987,10 @@ def main():
             mensajes = agregar_mensajes(mensajes, ["Elige un movimiento"])
             botones = crear_botones_movimientos(equipo_jugador)
             modo_interfaz = "movimientos"
+            return
+
+        if boton.accion == "volver_inicio":
+            volver_inicio()
             return
 
         if modo_interfaz == "reemplazo":
@@ -501,28 +1017,11 @@ def main():
         )
 
         textos = [mostrar_evento(e) for e in eventos]
-        reemplazo_rival = elegir_reemplazo_ia_si_cayo(
-            equipo_rival,
-            equipo_jugador,
-            agente_rival,
-        )
+        resultado_revision = revisar_fin_o_reemplazos(textos, reemplazo_humano=True)
+        if resultado_revision == "finalizado":
+            return
 
-        if reemplazo_rival:
-            textos.append(reemplazo_rival)
-
-        if not equipo_jugador.tiene_pokemon_vivos():
-            textos.append("Gana el rival")
-            terminado = True
-        elif not equipo_rival.tiene_pokemon_vivos():
-            textos.append("Gana el jugador")
-            terminado = True
-        elif not equipo_jugador.pokemon_activo().esta_vivo():
-            textos.append("Elige tu siguiente Pokemon")
-            botones = crear_botones_cambio(
-                equipo_jugador,
-                permitir_volver=False,
-            )
-            modo_interfaz = "reemplazo"
+        if resultado_revision == "reemplazo":
             mensajes = agregar_mensajes(mensajes, textos)
             return
 
@@ -535,16 +1034,63 @@ def main():
             if evento.type == pygame.QUIT:
                 corriendo = False
 
-            if evento.type == pygame.MOUSEBUTTONDOWN and not terminado:
+            if pantalla_actual == "inicio":
+                destino = pantalla_inicio.manejar_evento(evento)
+                if destino:
+                    pantalla_actual = destino
+                continue
+
+            if pantalla_actual == "modalidad":
+                destino = pantalla_modalidad.manejar_evento(evento)
+                if destino == "inicio":
+                    pantalla_actual = "inicio"
+                elif destino == "seleccion":
+                    pantalla_seleccion.configurar(pantalla_modalidad.modo)
+                    pantalla_actual = "seleccion"
+                continue
+
+            if pantalla_actual == "seleccion":
+                destino = pantalla_seleccion.manejar_evento(evento)
+                if destino == "modalidad":
+                    pantalla_actual = "modalidad"
+                elif destino == "batalla":
+                    iniciar_batalla()
+                continue
+
+            if evento.type == pygame.MOUSEBUTTONDOWN:
                 for boton in botones:
                     if boton.contiene(evento.pos):
                         manejar_boton(boton)
                         break
 
-            if evento.type == pygame.KEYDOWN and not terminado:
+            if evento.type == pygame.KEYDOWN:
                 boton = boton_por_tecla(evento.key, botones)
                 if boton is not None:
                     manejar_boton(boton)
+
+        if pantalla_actual == "inicio":
+            pantalla_inicio.dibujar(pantalla, fuentes, sprites)
+            pygame.display.flip()
+            reloj.tick(FPS)
+            continue
+
+        if pantalla_actual == "modalidad":
+            pantalla_modalidad.dibujar(pantalla, fuentes, sprites)
+            pygame.display.flip()
+            reloj.tick(FPS)
+            continue
+
+        if pantalla_actual == "seleccion":
+            pantalla_seleccion.dibujar(pantalla, fuentes, sprites)
+            pygame.display.flip()
+            reloj.tick(FPS)
+            continue
+
+        if modo_juego == "ia_ia" and not terminado:
+            ahora = pygame.time.get_ticks()
+            if ahora - ultimo_turno_ia >= IA_TURNO_MS:
+                ejecutar_turno_ia()
+                ultimo_turno_ia = ahora
 
         dibujar_escenario(pantalla)
 
@@ -605,6 +1151,10 @@ def main():
 
         dibujar_log(pantalla, fuente, mensajes)
         dibujar_panel_comandos(pantalla)
+
+        if modo_juego == "ia_ia" and not terminado:
+            dibujar_texto(pantalla, fuente, "Batalla automatica", 474, 486)
+            dibujar_texto(pantalla, fuente_pequena, "Los agentes eligen sus acciones.", 474, 520)
 
         for boton in botones:
             boton.dibujar(pantalla, fuente)

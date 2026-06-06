@@ -1,7 +1,6 @@
 import random
 
-from Batalla.Danio import calcular_daño
-from Batalla.Tabla_tipos import obtener_modificador_tipo
+from Batalla.Danio import calcular_daño, obtener_modificador_defensor
 
 
 def turno(p1, p2, mov1, mov2):
@@ -103,7 +102,7 @@ def atacar_con_indice(atacante, defensor, indice_movimiento):
 
 def atacar(atacante, defensor, movimiento):
     if random.random() <= movimiento.precision:
-        mult = obtener_modificador_tipo(movimiento.tipo, defensor.tipo)
+        mult = obtener_modificador_defensor(movimiento, defensor)
         daño = calcular_daño(atacante, defensor, movimiento)
         daño_real = defensor.recibir_daño(daño)
 

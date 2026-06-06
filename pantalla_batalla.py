@@ -1,4 +1,4 @@
-from Interfaz.PantallaBatalla import main
+from Interfaz.RetroUI import main
 
 
 if __name__ == "__main__":

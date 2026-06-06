@@ -12,6 +12,13 @@ PESOS_AVANZADOS = {
     "velocidad": 0.10,
     "amenaza": 0.10,
 }
+PESOS_OPTIMIZADOS_INICIALES = {
+    "hp": 0.2824,
+    "vivos": 0.1439,
+    "tipo": 0.2414,
+    "velocidad": 0.1086,
+    "amenaza": 0.2237,
+}
 
 
 def evaluar(p1, p2):

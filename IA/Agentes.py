@@ -5,6 +5,7 @@ from IA.Heuristicas import (
     elegir_reemplazo_aleatorio,
     elegir_reemplazo_heuristico_avanzado,
     elegir_reemplazo_heuristico,
+    PESOS_OPTIMIZADOS_INICIALES,
 )
 from IA.Minimax import elegir_accion_minimax
 
@@ -34,6 +35,11 @@ class AgenteHeuristicoAvanzado:
 
     def elegir_reemplazo(self, equipo, equipo_rival):
         return elegir_reemplazo_heuristico_avanzado(equipo, equipo_rival, self.pesos)
+
+
+class AgenteOptimizado(AgenteHeuristicoAvanzado):
+    def __init__(self):
+        super().__init__(PESOS_OPTIMIZADOS_INICIALES)
 
 
 class AgenteMinimax:

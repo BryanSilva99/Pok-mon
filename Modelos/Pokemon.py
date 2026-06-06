@@ -7,8 +7,11 @@ class Pokemon:
         self.defensa = defensa
         self.velocidad = velocidad
         self.tipo = tipo
+        self.tipo_secundario = None
+        self.tipos = [tipo]
         self.estado = None
         self.movimientos = []
+        self.movimientos_disponibles = []
 
     def esta_vivo(self):
         return self.hp_actual > 0
@@ -23,6 +26,9 @@ class Pokemon:
             self.movimientos.append(movimiento)
             return True
         return False
+
+    def definir_movimientos_disponibles(self, movimientos):
+        self.movimientos_disponibles = movimientos
 
     def copiar(self):
         import copy
