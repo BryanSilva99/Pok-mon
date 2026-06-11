@@ -1,5 +1,9 @@
 from Batalla.Danio import calcular_daño
-from IA.Heuristicas import acciones_disponibles, mejor_daño_esperado
+from IA.Heuristicas import (
+    acciones_disponibles,
+    evaluar_estado_avanzado,
+    mejor_daño_esperado,
+)
 
 
 INFINITO = 10**9
@@ -110,7 +114,9 @@ def acciones_busqueda(equipo):
     acciones = acciones_disponibles(equipo)
 
     if equipo.pokemon_activo().esta_vivo():
-        return [accion for accion in acciones if accion.tipo == "atacar"]
+        ataques = [accion for accion in acciones if accion.tipo == "atacar"]
+        cambios = [accion for accion in acciones if accion.tipo == "cambiar"]
+        return ataques + cambios[:1]
 
     return [accion for accion in acciones if accion.tipo == "cambiar"]
 
@@ -172,18 +178,7 @@ def evaluar_estado(equipo_ia, equipo_rival):
     if equipo_rival.tiene_pokemon_vivos() and not equipo_ia.tiene_pokemon_vivos():
         return -INFINITO
 
-    hp_ia = hp_total(equipo_ia)
-    hp_rival = hp_total(equipo_rival)
-    vivos_ia = len(equipo_ia.pokemons_vivos())
-    vivos_rival = len(equipo_rival.pokemons_vivos())
-    amenaza_ia = amenaza_activa(equipo_ia, equipo_rival)
-    amenaza_rival = amenaza_activa(equipo_rival, equipo_ia)
-
-    return (
-        (hp_ia - hp_rival) * PESO_HP
-        + (vivos_ia - vivos_rival) * PESO_POKEMON_VIVO
-        + (amenaza_ia - amenaza_rival) * PESO_AMENAZA
-    )
+    return evaluar_estado_avanzado(equipo_ia, equipo_rival) * 1000
 
 
 def amenaza_activa(equipo_atacante, equipo_defensor):

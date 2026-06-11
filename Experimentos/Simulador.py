@@ -7,11 +7,18 @@ from main import crear_equipos
 MAX_TURNOS = 200
 
 
-def simular_partida(agente_1, agente_2, nombre_1, nombre_2, semilla=None):
+def simular_partida(
+    agente_1,
+    agente_2,
+    nombre_1,
+    nombre_2,
+    semilla=None,
+    tamano_equipo=3,
+):
     if semilla is not None:
         random.seed(semilla)
 
-    equipo_1, equipo_2 = crear_equipos()
+    equipo_1, equipo_2 = crear_equipos(tamano_equipo)
     equipo_1.nombre = nombre_1
     equipo_2.nombre = nombre_2
     turno = 0
@@ -41,7 +48,14 @@ def simular_partida(agente_1, agente_2, nombre_1, nombre_2, semilla=None):
     }
 
 
-def ejecutar_serie(creador_agente_1, creador_agente_2, nombre_1, nombre_2, partidas=100):
+def ejecutar_serie(
+    creador_agente_1,
+    creador_agente_2,
+    nombre_1,
+    nombre_2,
+    partidas=100,
+    tamano_equipo=3,
+):
     resultados = []
 
     for numero_partida in range(partidas):
@@ -52,6 +66,7 @@ def ejecutar_serie(creador_agente_1, creador_agente_2, nombre_1, nombre_2, parti
                 nombre_1,
                 nombre_2,
                 semilla=numero_partida,
+                tamano_equipo=tamano_equipo,
             )
         else:
             resultado = simular_partida(
@@ -60,6 +75,7 @@ def ejecutar_serie(creador_agente_1, creador_agente_2, nombre_1, nombre_2, parti
                 nombre_2,
                 nombre_1,
                 semilla=numero_partida,
+                tamano_equipo=tamano_equipo,
             )
             resultado = invertir_perspectiva(resultado)
 

@@ -16,7 +16,7 @@ SPRITE_DIR = ROOT / "Assets" / "Sprites"
 WIDTH = 1024
 HEIGHT = 576
 FPS = 60
-TEAM_SIZE = 3
+DEFAULT_TEAM_SIZE = 3
 AI_TURN_MS = 850
 
 INK = (29, 34, 43)
@@ -253,10 +253,16 @@ class TeamSlot:
         if not name:
             draw_text(surface, tiny, f"Slot {self.index + 1}", self.rect.center, INK_2, center=True)
             return
-        sprite = assets.sprite(name, "front", 30, frame_index)
+        sprite = assets.sprite(name, "front", min(28, self.rect.height - 4), frame_index)
         if sprite:
             surface.blit(sprite, sprite.get_rect(center=(self.rect.x + 22, self.rect.centery)))
-        draw_text(surface, tiny, fit_text(tiny, name, self.rect.width - 50), (self.rect.x + 42, self.rect.y + 11), INK)
+        draw_text(
+            surface,
+            tiny,
+            fit_text(tiny, name, self.rect.width - 50),
+            (self.rect.x + 42, self.rect.centery - tiny.get_height() // 2),
+            INK,
+        )
 
 
 class Screen:
@@ -333,9 +339,7 @@ class ModeScreen(Screen):
             self.game.manager.go_to("start")
         elif self.next.contains(event.pos):
             self.game.mode = self.mode
-            select = self.game.manager.screens["select"]
-            select.set_mode(self.mode)
-            self.game.manager.go_to("select")
+            self.game.manager.go_to("size")
         else:
             for mode, rect in self.cards.items():
                 if rect.collidepoint(event.pos):
@@ -366,6 +370,60 @@ class ModeScreen(Screen):
         self.next.draw(surface, self.game.fonts["small"])
 
 
+class TeamSizeScreen(Screen):
+    def __init__(self, game):
+        super().__init__(game)
+        self.team_size = DEFAULT_TEAM_SIZE
+        self.back = Button((70, 504, 140, 44), "Volver", "back")
+        self.next = Button((806, 504, 150, 44), "Continuar", "next", primary=True)
+        self.cards = {
+            3: pygame.Rect(112, 190, 340, 228),
+            4: pygame.Rect(572, 190, 340, 228),
+        }
+
+    def enter(self):
+        self.team_size = self.game.team_size
+
+    def handle_event(self, event):
+        if event.type != pygame.MOUSEBUTTONDOWN:
+            return
+        if self.back.contains(event.pos):
+            self.game.manager.go_to("mode")
+        elif self.next.contains(event.pos):
+            self.game.team_size = self.team_size
+            select = self.game.manager.screens["select"]
+            select.configure(self.game.mode, self.team_size)
+            self.game.manager.go_to("select")
+        else:
+            for team_size, rect in self.cards.items():
+                if rect.collidepoint(event.pos):
+                    self.team_size = team_size
+
+    def update(self, dt):
+        self.back.update()
+        self.next.update()
+
+    def draw_option(self, surface, rect, title, subtitle, selected, color):
+        pygame.draw.rect(surface, SHADOW, rect.move(6, 7))
+        pygame.draw.rect(surface, CREAM if selected else PANEL, rect)
+        pygame.draw.rect(surface, color if selected else INK, rect, 5 if selected else 3)
+        pygame.draw.rect(surface, WHITE, rect.inflate(-12, -12), 2)
+        draw_text(surface, self.game.fonts["title"], title, (rect.centerx, rect.y + 72), color, center=True)
+        draw_text(surface, self.game.fonts["large"], "VS", (rect.centerx, rect.y + 132), INK, center=True)
+        draw_text(surface, self.game.fonts["small"], subtitle, (rect.x + 34, rect.y + 174), INK_2)
+        draw_text(surface, self.game.fonts["tiny"], "Seleccionado" if selected else "Pulsa para elegir", (rect.x + 34, rect.y + 204), color)
+
+    def draw(self, surface):
+        surface.fill((192, 216, 208))
+        draw_text(surface, self.game.fonts["large"], "Tamano de batalla", (72, 72), INK)
+        mode_label = "P1 vs IA" if self.game.mode == "player_ia" else "IA vs IA"
+        draw_text(surface, self.game.fonts["medium"], f"Modalidad: {mode_label}", (76, 126), INK_2)
+        self.draw_option(surface, self.cards[3], "3", "Combate rapido y claro.", self.team_size == 3, BLUE)
+        self.draw_option(surface, self.cards[4], "4", "Mas opciones de cambio.", self.team_size == 4, GREEN)
+        self.back.draw(surface, self.game.fonts["small"])
+        self.next.draw(surface, self.game.fonts["small"])
+
+
 class PokemonSelectScreen(Screen):
     def __init__(self, game):
         super().__init__(game)
@@ -373,8 +431,9 @@ class PokemonSelectScreen(Screen):
         self.cards = []
         self.team1 = []
         self.team2 = []
+        self.team_size = DEFAULT_TEAM_SIZE
         self.active_team = "equipo1"
-        self.message = "Elige 3 criaturas para Equipo 1."
+        self.message = self.selection_message()
         self.mode = "player_ia"
         self.back = Button((40, 522, 118, 38), "Volver", "back")
         self.clear = Button((172, 522, 124, 38), "Limpiar", "clear")
@@ -391,9 +450,14 @@ class PokemonSelectScreen(Screen):
             rect = pygame.Rect(348 + col * 106, 112 + row * 79, 96, 72)
             self.cards.append(PokemonCard(data, rect))
 
-    def set_mode(self, mode):
+    def configure(self, mode, team_size):
         self.mode = mode
-        self.message = "Elige 3 criaturas para Equipo 1."
+        self.set_team_size(team_size)
+        self.message = self.selection_message()
+
+    def selection_message(self):
+        equipo = "Equipo 1" if self.active_team == "equipo1" else "Equipo 2"
+        return f"Elige {self.team_size} criaturas para {equipo}."
 
     def current_team(self):
         return self.team1 if self.active_team == "equipo1" else self.team2
@@ -402,13 +466,13 @@ class PokemonSelectScreen(Screen):
         return self.team2 if self.active_team == "equipo1" else self.team1
 
     def ready(self):
-        return len(self.team1) == TEAM_SIZE and len(self.team2) == TEAM_SIZE
+        return len(self.team1) == self.team_size and len(self.team2) == self.team_size
 
     def handle_event(self, event):
         if event.type != pygame.MOUSEBUTTONDOWN:
             return
         if self.back.contains(event.pos):
-            self.game.manager.go_to("mode")
+            self.game.manager.go_to("size")
             return
         if self.clear.contains(event.pos):
             self.current_team().clear()
@@ -424,13 +488,13 @@ class PokemonSelectScreen(Screen):
             self.active_team = "equipo1"
             self.team1_button.primary = True
             self.team2_button.primary = False
-            self.message = "Editando Equipo 1."
+            self.message = self.selection_message()
             return
         if self.team2_button.contains(event.pos):
             self.active_team = "equipo2"
             self.team1_button.primary = False
             self.team2_button.primary = True
-            self.message = "Editando Equipo 2."
+            self.message = self.selection_message()
             return
         for card in self.cards:
             if card.contains(event.pos):
@@ -445,15 +509,28 @@ class PokemonSelectScreen(Screen):
             self.message = f"{name} removido."
         elif name in other:
             self.message = f"{name} ya esta en el otro equipo."
-        elif len(current) >= TEAM_SIZE:
-            self.message = "Ese equipo ya tiene 3 criaturas."
+        elif len(current) >= self.team_size:
+            self.message = f"Ese equipo ya tiene {self.team_size} criaturas."
         else:
             current.append(name)
             self.message = f"{name} elegido."
 
+    def set_team_size(self, team_size):
+        self.team_size = team_size
+        self.game.team_size = team_size
+        self.team1 = self.team1[:team_size]
+        self.team2 = self.team2[:team_size]
+        self.message = self.selection_message()
+
     def update(self, dt):
         self.start.enabled = self.ready()
-        for button in [self.back, self.clear, self.start, self.team1_button, self.team2_button]:
+        for button in [
+            self.back,
+            self.clear,
+            self.start,
+            self.team1_button,
+            self.team2_button,
+        ]:
             button.update()
         for card in self.cards:
             card.update()
@@ -461,9 +538,15 @@ class PokemonSelectScreen(Screen):
     def draw_team_panel(self, surface, title, team, rect, active):
         fill = (232, 246, 255) if active else PANEL
         draw_panel(surface, rect, fill=fill, border=BLUE if active else INK)
-        draw_text(surface, self.game.fonts["small"], f"{title}: {len(team)}/3", (rect.x + 14, rect.y + 12), INK)
-        for i in range(TEAM_SIZE):
-            slot = TeamSlot((rect.x + 14, rect.y + 42 + i * 42, rect.width - 28, 34), i)
+        draw_text(
+            surface,
+            self.game.fonts["small"],
+            f"{title}: {len(team)}/{self.team_size}",
+            (rect.x + 14, rect.y + 12),
+            INK,
+        )
+        for i in range(self.team_size):
+            slot = TeamSlot((rect.x + 14, rect.y + 38 + i * 26, rect.width - 28, 24), i)
             slot.draw(
                 surface,
                 self.game.fonts["small"],
@@ -477,11 +560,11 @@ class PokemonSelectScreen(Screen):
         surface.fill((198, 216, 204))
         draw_text(surface, self.game.fonts["large"], "Seleccion de equipo", (34, 28), INK)
         mode_label = "P1 vs IA" if self.mode == "player_ia" else "IA vs IA"
-        draw_text(surface, self.game.fonts["small"], f"Modalidad: {mode_label}", (38, 82), INK_2)
+        draw_text(surface, self.game.fonts["small"], f"{mode_label} | {self.team_size} vs {self.team_size}", (38, 82), INK_2)
         self.team1_button.draw(surface, self.game.fonts["tiny"])
         self.team2_button.draw(surface, self.game.fonts["tiny"])
-        self.draw_team_panel(surface, "Equipo 1", self.team1, pygame.Rect(32, 170, 292, 170), self.active_team == "equipo1")
-        self.draw_team_panel(surface, "Equipo 2", self.team2, pygame.Rect(32, 356, 292, 142), self.active_team == "equipo2")
+        self.draw_team_panel(surface, "Equipo 1", self.team1, pygame.Rect(32, 170, 292, 150), self.active_team == "equipo1")
+        self.draw_team_panel(surface, "Equipo 2", self.team2, pygame.Rect(32, 342, 292, 154), self.active_team == "equipo2")
         draw_text(surface, self.game.fonts["medium"], "Criaturas disponibles", (348, 62), INK)
         draw_text(surface, self.game.fonts["tiny"], self.message, (350, 90), INK_2)
         for card in self.cards:
@@ -503,6 +586,7 @@ class BattleScreen(Screen):
     def __init__(self, game):
         super().__init__(game)
         self.mode = "player_ia"
+        self.team_size = DEFAULT_TEAM_SIZE
         self.team1 = None
         self.team2 = None
         self.agent1 = AgenteHeuristico()
@@ -513,8 +597,9 @@ class BattleScreen(Screen):
         self.finished = False
         self.last_ai_turn = 0
 
-    def setup(self, mode, names1, names2):
+    def setup(self, mode, names1, names2, team_size=DEFAULT_TEAM_SIZE):
         self.mode = mode
+        self.team_size = team_size
         name1 = "Player 1" if mode == "player_ia" else "IA 1"
         name2 = "IA" if mode == "player_ia" else "IA 2"
         self.team1 = crear_equipo_desde_nombres(name1, names1)
@@ -753,12 +838,14 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         self.mode = "player_ia"
+        self.team_size = DEFAULT_TEAM_SIZE
         self.fonts = self.load_fonts()
         self.assets = AssetStore()
         self.assets.load([entry["nombre"] for entry in catalogo_pokemon()] + ["Pikachu"])
         self.manager = ScreenManager(self)
         self.manager.register("start", StartScreen(self))
         self.manager.register("mode", ModeScreen(self))
+        self.manager.register("size", TeamSizeScreen(self))
         self.manager.register("select", PokemonSelectScreen(self))
         self.manager.register("battle", BattleScreen(self))
         self.manager.go_to("start")
@@ -784,7 +871,7 @@ class Game:
 
     def start_battle(self, names1, names2):
         battle = self.manager.screens["battle"]
-        battle.setup(self.mode, names1, names2)
+        battle.setup(self.mode, names1, names2, self.team_size)
         self.manager.go_to("battle")
 
     def run(self):

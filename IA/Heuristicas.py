@@ -6,18 +6,24 @@ from Modelos.Accion import Accion
 
 
 PESOS_AVANZADOS = {
-    "hp": 0.35,
-    "vivos": 0.30,
-    "tipo": 0.15,
-    "velocidad": 0.10,
-    "amenaza": 0.10,
+    "hp": 0.28,
+    "vivos": 0.22,
+    "tipo": 0.12,
+    "velocidad": 0.08,
+    "amenaza": 0.12,
+    "ko": 0.08,
+    "riesgo": 0.06,
+    "calidad_activo": 0.04,
 }
 PESOS_OPTIMIZADOS_INICIALES = {
-    "hp": 0.2824,
-    "vivos": 0.1439,
-    "tipo": 0.2414,
-    "velocidad": 0.1086,
-    "amenaza": 0.2237,
+    "hp": 0.1414,
+    "vivos": 0.2836,
+    "tipo": 0.1675,
+    "velocidad": 0.1068,
+    "amenaza": 0.2507,
+    "ko": 0.0200,
+    "riesgo": 0.0200,
+    "calidad_activo": 0.0100,
 }
 
 
@@ -163,6 +169,9 @@ def evaluar_estado_avanzado(equipo, equipo_rival, pesos=None):
         "tipo": ventaja_tipo_normalizada(equipo, equipo_rival),
         "velocidad": velocidad_normalizada(equipo, equipo_rival),
         "amenaza": amenaza_normalizada(equipo, equipo_rival),
+        "ko": ko_normalizado(equipo, equipo_rival),
+        "riesgo": riesgo_normalizado(equipo, equipo_rival),
+        "calidad_activo": calidad_activo_normalizada(equipo, equipo_rival),
     }
 
     return sum(pesos[nombre] * valor for nombre, valor in factores.items())
@@ -225,6 +234,42 @@ def amenaza_normalizada(equipo, equipo_rival):
     )
     amenaza_maxima = max(amenaza_equipo, amenaza_rival, 1)
     return (amenaza_equipo - amenaza_rival) / amenaza_maxima
+
+
+def ko_normalizado(equipo, equipo_rival):
+    activo = equipo.pokemon_activo()
+    rival = equipo_rival.pokemon_activo()
+    ko_equipo = 1 if mejor_daño_esperado(activo, rival) >= rival.hp_actual else 0
+    ko_rival = 1 if mejor_daño_esperado(rival, activo) >= activo.hp_actual else 0
+    return ko_equipo - ko_rival
+
+
+def riesgo_normalizado(equipo, equipo_rival):
+    activo = equipo.pokemon_activo()
+    rival = equipo_rival.pokemon_activo()
+    amenaza_rival = mejor_daño_esperado(rival, activo)
+    amenaza_equipo = mejor_daño_esperado(activo, rival)
+    riesgo_rival = amenaza_rival / max(activo.hp_actual, 1)
+    presion_equipo = amenaza_equipo / max(rival.hp_actual, 1)
+    return limitar(presion_equipo - riesgo_rival, -1, 1)
+
+
+def calidad_activo_normalizada(equipo, equipo_rival):
+    calidad_equipo = calidad_pokemon(equipo.pokemon_activo())
+    calidad_rival = calidad_pokemon(equipo_rival.pokemon_activo())
+    calidad_maxima = max(calidad_equipo, calidad_rival, 1)
+    return (calidad_equipo - calidad_rival) / calidad_maxima
+
+
+def calidad_pokemon(pokemon):
+    hp_ratio = pokemon.hp_actual / max(pokemon.hp_max, 1)
+    ofensiva = pokemon.ataque / max(pokemon.ataque + pokemon.defensa, 1)
+    velocidad = pokemon.velocidad / max(pokemon.velocidad + 100, 1)
+    return hp_ratio * 0.5 + ofensiva * 0.3 + velocidad * 0.2
+
+
+def limitar(valor, minimo, maximo):
+    return max(minimo, min(maximo, valor))
 
 
 def mejor_modificador_tipo(atacante, defensor):

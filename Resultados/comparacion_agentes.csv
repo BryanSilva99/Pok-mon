@@ -1,0 +1,8 @@
+agente_1,agente_2,partidas,victorias_1,victorias_2,empates,win_rate_1,win_rate_2,turnos_promedio,hp_promedio_1,hp_promedio_2
+Random A,Random B,100,48,52,0,48.0,52.0,15.57,31.63,26.8
+Heuristico,Random,100,89,11,0,89.0,11.0,9.58,122.39,6.33
+Avanzado manual,Random,100,80,20,0,80.0,20.0,10.5,107.0,10.66
+Avanzado manual,Heuristico,100,42,58,0,42.0,57.99999999999999,8.46,47.33,62.06
+Optimizado,Avanzado manual,100,54,46,0,54.0,46.0,10.81,62.89,56.32
+Minimax p2,Random,100,85,15,0,85.0,15.0,11.33,112.3,11.32
+Minimax p2,Heuristico,100,33,67,0,33.0,67.0,9.04,28.09,82.38

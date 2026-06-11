@@ -1,0 +1,271 @@
+{
+  "comparaciones": [
+    {
+      "agente_1": "Random A",
+      "agente_2": "Random B",
+      "partidas": 100,
+      "victorias_1": 48,
+      "victorias_2": 52,
+      "empates": 0,
+      "win_rate_1": 48.0,
+      "win_rate_2": 52.0,
+      "turnos_promedio": 15.57,
+      "hp_promedio_1": 31.63,
+      "hp_promedio_2": 26.8
+    },
+    {
+      "agente_1": "Heuristico",
+      "agente_2": "Random",
+      "partidas": 100,
+      "victorias_1": 89,
+      "victorias_2": 11,
+      "empates": 0,
+      "win_rate_1": 89.0,
+      "win_rate_2": 11.0,
+      "turnos_promedio": 9.58,
+      "hp_promedio_1": 122.39,
+      "hp_promedio_2": 6.33
+    },
+    {
+      "agente_1": "Avanzado manual",
+      "agente_2": "Random",
+      "partidas": 100,
+      "victorias_1": 80,
+      "victorias_2": 20,
+      "empates": 0,
+      "win_rate_1": 80.0,
+      "win_rate_2": 20.0,
+      "turnos_promedio": 10.5,
+      "hp_promedio_1": 107.0,
+      "hp_promedio_2": 10.66
+    },
+    {
+      "agente_1": "Avanzado manual",
+      "agente_2": "Heuristico",
+      "partidas": 100,
+      "victorias_1": 42,
+      "victorias_2": 58,
+      "empates": 0,
+      "win_rate_1": 42.0,
+      "win_rate_2": 57.99999999999999,
+      "turnos_promedio": 8.46,
+      "hp_promedio_1": 47.33,
+      "hp_promedio_2": 62.06
+    },
+    {
+      "agente_1": "Optimizado",
+      "agente_2": "Avanzado manual",
+      "partidas": 100,
+      "victorias_1": 54,
+      "victorias_2": 46,
+      "empates": 0,
+      "win_rate_1": 54.0,
+      "win_rate_2": 46.0,
+      "turnos_promedio": 10.81,
+      "hp_promedio_1": 62.89,
+      "hp_promedio_2": 56.32
+    },
+    {
+      "agente_1": "Minimax p2",
+      "agente_2": "Random",
+      "partidas": 100,
+      "victorias_1": 85,
+      "victorias_2": 15,
+      "empates": 0,
+      "win_rate_1": 85.0,
+      "win_rate_2": 15.0,
+      "turnos_promedio": 11.33,
+      "hp_promedio_1": 112.3,
+      "hp_promedio_2": 11.32
+    },
+    {
+      "agente_1": "Minimax p2",
+      "agente_2": "Heuristico",
+      "partidas": 100,
+      "victorias_1": 33,
+      "victorias_2": 67,
+      "empates": 0,
+      "win_rate_1": 33.0,
+      "win_rate_2": 67.0,
+      "turnos_promedio": 9.04,
+      "hp_promedio_1": 28.09,
+      "hp_promedio_2": 82.38
+    }
+  ],
+  "profundidad": [
+    {
+      "agente_1": "Minimax p1",
+      "agente_2": "Random",
+      "partidas": 20,
+      "victorias_1": 16,
+      "victorias_2": 4,
+      "empates": 0,
+      "win_rate_1": 80.0,
+      "win_rate_2": 20.0,
+      "turnos_promedio": 10.35,
+      "hp_promedio_1": 112.75,
+      "hp_promedio_2": 15.35
+    },
+    {
+      "agente_1": "Minimax p2",
+      "agente_2": "Random",
+      "partidas": 20,
+      "victorias_1": 16,
+      "victorias_2": 4,
+      "empates": 0,
+      "win_rate_1": 80.0,
+      "win_rate_2": 20.0,
+      "turnos_promedio": 10.25,
+      "hp_promedio_1": 129.45,
+      "hp_promedio_2": 12.9
+    },
+    {
+      "agente_1": "Minimax p3",
+      "agente_2": "Random",
+      "partidas": 20,
+      "victorias_1": 17,
+      "victorias_2": 3,
+      "empates": 0,
+      "win_rate_1": 85.0,
+      "win_rate_2": 15.0,
+      "turnos_promedio": 9.95,
+      "hp_promedio_1": 127.25,
+      "hp_promedio_2": 13.5
+    }
+  ],
+  "comparaciones_4v4": [
+    {
+      "agente_1": "Avanzado manual 4v4",
+      "agente_2": "Random 4v4",
+      "partidas": 30,
+      "victorias_1": 30,
+      "victorias_2": 0,
+      "empates": 0,
+      "win_rate_1": 100.0,
+      "win_rate_2": 0.0,
+      "turnos_promedio": 13.433333333333334,
+      "hp_promedio_1": 193.2,
+      "hp_promedio_2": 0.0
+    },
+    {
+      "agente_1": "Minimax p2 4v4",
+      "agente_2": "Heuristico 4v4",
+      "partidas": 30,
+      "victorias_1": 8,
+      "victorias_2": 22,
+      "empates": 0,
+      "win_rate_1": 26.666666666666668,
+      "win_rate_2": 73.33333333333333,
+      "turnos_promedio": 12.233333333333333,
+      "hp_promedio_1": 28.466666666666665,
+      "hp_promedio_2": 108.93333333333334
+    }
+  ],
+  "optimizacion": {
+    "mejor": {
+      "pesos": {
+        "hp": 0.21479841673664604,
+        "vivos": 0.21148564500869022,
+        "tipo": 0.03346068285283748,
+        "velocidad": 0.06674477728663432,
+        "amenaza": 0.18912074379338262,
+        "ko": 0.1699692877009496,
+        "riesgo": 0.056830931876634405,
+        "calidad_activo": 0.0575895147442254
+      },
+      "fitness": 0.6429074074074073,
+      "vs_manual": {
+        "agente_1": "Candidato",
+        "agente_2": "Manual",
+        "partidas": 15,
+        "victorias_1": 11,
+        "victorias_2": 4,
+        "empates": 0,
+        "win_rate_1": 73.33333333333333,
+        "win_rate_2": 26.666666666666668,
+        "turnos_promedio": 11.333333333333334,
+        "hp_promedio_1": 83.2,
+        "hp_promedio_2": 36.733333333333334
+      },
+      "vs_heuristico": {
+        "agente_1": "Candidato",
+        "agente_2": "Heuristico",
+        "partidas": 15,
+        "victorias_1": 7,
+        "victorias_2": 8,
+        "empates": 0,
+        "win_rate_1": 46.666666666666664,
+        "win_rate_2": 53.333333333333336,
+        "turnos_promedio": 8.6,
+        "hp_promedio_1": 48.733333333333334,
+        "hp_promedio_2": 48.06666666666667
+      },
+      "vs_random": {
+        "agente_1": "Candidato",
+        "agente_2": "Random",
+        "partidas": 15,
+        "victorias_1": 11,
+        "victorias_2": 4,
+        "empates": 0,
+        "win_rate_1": 73.33333333333333,
+        "win_rate_2": 26.666666666666668,
+        "turnos_promedio": 10.133333333333333,
+        "hp_promedio_1": 112.53333333333333,
+        "hp_promedio_2": 10.066666666666666
+      }
+    },
+    "historial": [
+      {
+        "generacion": 1,
+        "fitness": 0.46944444444444444,
+        "pesos": {
+          "hp": 0.016813276641079587,
+          "vivos": 0.1944493081754193,
+          "tipo": 0.03132358812306504,
+          "velocidad": 0.0406762556432016,
+          "amenaza": 0.19035693365789155,
+          "ko": 0.3707654190120545,
+          "riesgo": 0.05551353698022941,
+          "calidad_activo": 0.10010168176705901
+        },
+        "win_rate_manual": 40.0,
+        "win_rate_heuristico": 60.0,
+        "win_rate_random": 60.0
+      },
+      {
+        "generacion": 2,
+        "fitness": 0.4705555555555555,
+        "pesos": {
+          "hp": 0.21479841673664604,
+          "vivos": 0.21148564500869022,
+          "tipo": 0.03346068285283748,
+          "velocidad": 0.06674477728663432,
+          "amenaza": 0.18912074379338262,
+          "ko": 0.1699692877009496,
+          "riesgo": 0.056830931876634405,
+          "calidad_activo": 0.0575895147442254
+        },
+        "win_rate_manual": 40.0,
+        "win_rate_heuristico": 60.0,
+        "win_rate_random": 60.0
+      },
+      {
+        "generacion": 3,
+        "fitness": 0.4705555555555555,
+        "pesos": {
+          "hp": 0.21479841673664604,
+          "vivos": 0.21148564500869022,
+          "tipo": 0.03346068285283748,
+          "velocidad": 0.06674477728663432,
+          "amenaza": 0.18912074379338262,
+          "ko": 0.1699692877009496,
+          "riesgo": 0.056830931876634405,
+          "calidad_activo": 0.0575895147442254
+        },
+        "win_rate_manual": 40.0,
+        "win_rate_heuristico": 60.0,
+        "win_rate_random": 60.0
+      }
+    ]
+  }
+}

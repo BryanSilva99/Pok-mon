@@ -28,8 +28,8 @@ def crear_pokemon(nombre, hp, ataque, defensa, velocidad, tipo, movimientos):
     return pokemon
 
 
-def crear_equipos():
-    return crear_equipos_desde_dataset()
+def crear_equipos(tamano_equipo=3):
+    return crear_equipos_desde_dataset(tamano_equipo)
 
 
 def crear_equipos_desde_dataset(tamano_equipo=3):

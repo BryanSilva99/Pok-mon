@@ -10,6 +10,7 @@ from Experimentos.Simulador import ejecutar_serie
 
 PARTIDAS = 100
 PARTIDAS_PROFUNDIDAD = 10
+PARTIDAS_4V4 = 20
 
 
 def mostrar_resumen(resultado):
@@ -108,6 +109,36 @@ def ejecutar_prueba_profundidad():
         mostrar_resumen(resultado)
 
 
+def ejecutar_verificacion_4v4():
+    print(f"\n=== VERIFICACION 4 VS 4 ({PARTIDAS_4V4} partidas) ===")
+    casos = [
+        (
+            lambda: AgenteHeuristicoAvanzado(),
+            lambda: AgenteAleatorio(),
+            "Heuristico avanzado 4v4",
+            "Random 4v4",
+        ),
+        (
+            lambda: AgenteMinimax(profundidad=2),
+            lambda: AgenteHeuristico(),
+            "Minimax p2 4v4",
+            "Heuristico 4v4",
+        ),
+    ]
+
+    for creador_1, creador_2, nombre_1, nombre_2 in casos:
+        resultado = ejecutar_serie(
+            creador_1,
+            creador_2,
+            nombre_1,
+            nombre_2,
+            partidas=PARTIDAS_4V4,
+            tamano_equipo=4,
+        )
+        mostrar_resumen(resultado)
+
+
 if __name__ == "__main__":
     ejecutar_comparaciones()
     ejecutar_prueba_profundidad()
+    ejecutar_verificacion_4v4()

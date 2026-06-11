@@ -92,9 +92,9 @@ def mutar(pesos, probabilidad=0.25, intensidad=0.12):
 
 
 def optimizar_pesos(
-    tamaño_poblacion=8,
-    generaciones=5,
-    partidas_por_rival=10,
+    tamaño_poblacion=6,
+    generaciones=3,
+    partidas_por_rival=5,
     semilla=7,
 ):
     random.seed(semilla)
