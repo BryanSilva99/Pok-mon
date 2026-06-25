@@ -6,7 +6,13 @@ from PIL import Image, ImageSequence
 
 from Batalla.Combate import turno_acciones
 from Datos.PokemonDataset import catalogo_pokemon, crear_equipo_desde_nombres
-from IA.Agentes import AgenteHeuristico
+from IA.Agentes import (
+    AgenteAleatorio,
+    AgenteHeuristico,
+    AgenteHeuristicoAvanzado,
+    AgenteMinimax,
+    AgenteOptimizado,
+)
 from Modelos.Accion import Accion
 
 
@@ -58,6 +64,51 @@ TYPE_COLORS = {
     "acero": (136, 144, 158),
     "hada": (218, 126, 178),
 }
+
+AGENT_OPTIONS = {
+    "random": {
+        "label": "Aleatorio",
+        "detail": "Acciones validas al azar.",
+        "factory": AgenteAleatorio,
+        "color": GREEN,
+    },
+    "basic": {
+        "label": "Heuristico basico",
+        "detail": "Prioriza dano y ventaja inmediata.",
+        "factory": AgenteHeuristico,
+        "color": BLUE,
+    },
+    "advanced": {
+        "label": "Heuristico avanzado",
+        "detail": "Evalua HP, tipos, velocidad y riesgo.",
+        "factory": AgenteHeuristicoAvanzado,
+        "color": GOLD,
+    },
+    "minimax": {
+        "label": "Minimax",
+        "detail": "Busqueda alfa-beta con heuristica avanzada.",
+        "factory": lambda: AgenteMinimax(profundidad=2),
+        "color": RED,
+    },
+    "optimized": {
+        "label": "Optimizado GA",
+        "detail": "Heuristica avanzada con pesos evolutivos.",
+        "factory": AgenteOptimizado,
+        "color": BLUE_DARK,
+    },
+}
+
+AGENT_ORDER = [
+    "random",
+    "basic",
+    "advanced",
+    "minimax",
+    "optimized",
+]
+
+
+def create_agent(agent_key):
+    return AGENT_OPTIONS[agent_key]["factory"]()
 
 
 def clamp(value, low, high):
@@ -339,7 +390,7 @@ class ModeScreen(Screen):
             self.game.manager.go_to("start")
         elif self.next.contains(event.pos):
             self.game.mode = self.mode
-            self.game.manager.go_to("size")
+            self.game.manager.go_to("agents")
         else:
             for mode, rect in self.cards.items():
                 if rect.collidepoint(event.pos):
@@ -370,6 +421,110 @@ class ModeScreen(Screen):
         self.next.draw(surface, self.game.fonts["small"])
 
 
+class AgentSelectScreen(Screen):
+    def __init__(self, game):
+        super().__init__(game)
+        self.back = Button((70, 504, 140, 44), "Volver", "back")
+        self.next = Button((806, 504, 150, 44), "Continuar", "next", primary=True)
+        self.agent1_key = "basic"
+        self.agent2_key = "basic"
+        self.active_side = "agent2"
+        self.agent1_tab = pygame.Rect(74, 176, 220, 72)
+        self.agent2_tab = pygame.Rect(74, 270, 220, 72)
+        self.cards = {}
+        self.create_cards()
+
+    def create_cards(self):
+        self.cards = {}
+        for i, key in enumerate(AGENT_ORDER):
+            col = i % 2
+            row = i // 2
+            self.cards[key] = pygame.Rect(352 + col * 306, 116 + row * 82, 278, 62)
+
+    def enter(self):
+        self.agent1_key = self.game.agent1_key
+        self.agent2_key = self.game.agent2_key
+        self.active_side = "agent2"
+
+    def handle_event(self, event):
+        if event.type != pygame.MOUSEBUTTONDOWN:
+            return
+        if self.back.contains(event.pos):
+            self.game.manager.go_to("mode")
+            return
+        if self.next.contains(event.pos):
+            self.game.agent1_key = self.agent1_key
+            self.game.agent2_key = self.agent2_key
+            self.game.manager.go_to("size")
+            return
+        if self.game.mode == "ia_ia":
+            if self.agent1_tab.collidepoint(event.pos):
+                self.active_side = "agent1"
+                return
+            if self.agent2_tab.collidepoint(event.pos):
+                self.active_side = "agent2"
+                return
+        for key, rect in self.cards.items():
+            if rect.collidepoint(event.pos):
+                if self.game.mode == "ia_ia" and self.active_side == "agent1":
+                    self.agent1_key = key
+                else:
+                    self.agent2_key = key
+                return
+
+    def update(self, dt):
+        self.back.update()
+        self.next.update()
+
+    def selected_key(self):
+        if self.game.mode == "ia_ia" and self.active_side == "agent1":
+            return self.agent1_key
+        return self.agent2_key
+
+    def draw_tab(self, surface, rect, title, agent_key, active):
+        option = AGENT_OPTIONS[agent_key]
+        fill = CREAM if active else PANEL
+        border = option["color"] if active else INK_2
+        pygame.draw.rect(surface, SHADOW, rect.move(4, 5))
+        pygame.draw.rect(surface, fill, rect)
+        pygame.draw.rect(surface, border, rect, 4 if active else 2)
+        draw_text(surface, self.game.fonts["tiny"], title, (rect.x + 12, rect.y + 8), INK_2)
+        draw_text(surface, self.game.fonts["small"], fit_text(self.game.fonts["small"], option["label"], rect.width - 24), (rect.x + 12, rect.y + 29), INK)
+
+    def draw_agent_card(self, surface, key, rect, selected):
+        option = AGENT_OPTIONS[key]
+        color = option["color"]
+        pygame.draw.rect(surface, SHADOW, rect.move(4, 5))
+        pygame.draw.rect(surface, CREAM if selected else PANEL, rect)
+        pygame.draw.rect(surface, color if selected else INK, rect, 4 if selected else 2)
+        pygame.draw.rect(surface, WHITE, rect.inflate(-10, -10), 1)
+        pygame.draw.rect(surface, color, (rect.x + 12, rect.y + 14, 34, 34))
+        draw_text(surface, self.game.fonts["tiny"], "IA", (rect.x + 29, rect.y + 31), WHITE, center=True)
+        draw_text(surface, self.game.fonts["small"], option["label"], (rect.x + 58, rect.y + 11), INK)
+        draw_text(surface, self.game.fonts["tiny"], option["detail"], (rect.x + 58, rect.y + 36), INK_2)
+
+    def draw(self, surface):
+        surface.fill((192, 216, 208))
+        mode_label = "P1 vs IA" if self.game.mode == "player_ia" else "IA vs IA"
+        title = "Selecciona IA rival" if self.game.mode == "player_ia" else "Selecciona agentes"
+        draw_text(surface, self.game.fonts["large"], title, (72, 58), INK)
+        draw_text(surface, self.game.fonts["small"], f"Modalidad: {mode_label}", (76, 110), INK_2)
+
+        if self.game.mode == "ia_ia":
+            self.draw_tab(surface, self.agent1_tab, "IA 1", self.agent1_key, self.active_side == "agent1")
+            self.draw_tab(surface, self.agent2_tab, "IA 2", self.agent2_key, self.active_side == "agent2")
+            draw_text(surface, self.game.fonts["tiny"], "Pulsa IA 1 o IA 2 para configurar.", (78, 366), INK_2)
+        else:
+            self.draw_tab(surface, self.agent2_tab, "Rival", self.agent2_key, True)
+            draw_text(surface, self.game.fonts["tiny"], "Tu equipo sera controlado manualmente.", (78, 366), INK_2)
+
+        selected = self.selected_key()
+        for key in AGENT_ORDER:
+            self.draw_agent_card(surface, key, self.cards[key], selected == key)
+        self.back.draw(surface, self.game.fonts["small"])
+        self.next.draw(surface, self.game.fonts["small"])
+
+
 class TeamSizeScreen(Screen):
     def __init__(self, game):
         super().__init__(game)
@@ -388,7 +543,7 @@ class TeamSizeScreen(Screen):
         if event.type != pygame.MOUSEBUTTONDOWN:
             return
         if self.back.contains(event.pos):
-            self.game.manager.go_to("mode")
+            self.game.manager.go_to("agents")
         elif self.next.contains(event.pos):
             self.game.team_size = self.team_size
             select = self.game.manager.screens["select"]
@@ -604,6 +759,8 @@ class BattleScreen(Screen):
         name2 = "IA" if mode == "player_ia" else "IA 2"
         self.team1 = crear_equipo_desde_nombres(name1, names1)
         self.team2 = crear_equipo_desde_nombres(name2, names2)
+        self.agent1 = create_agent(self.game.agent1_key)
+        self.agent2 = create_agent(self.game.agent2_key)
         self.messages = ["Elige un movimiento"] if mode == "player_ia" else ["Combate automatico"]
         self.buttons = self.move_buttons() if mode == "player_ia" else []
         self.interface_mode = "moves"
@@ -839,12 +996,15 @@ class Game:
         self.running = True
         self.mode = "player_ia"
         self.team_size = DEFAULT_TEAM_SIZE
+        self.agent1_key = "basic"
+        self.agent2_key = "basic"
         self.fonts = self.load_fonts()
         self.assets = AssetStore()
         self.assets.load([entry["nombre"] for entry in catalogo_pokemon()] + ["Pikachu"])
         self.manager = ScreenManager(self)
         self.manager.register("start", StartScreen(self))
         self.manager.register("mode", ModeScreen(self))
+        self.manager.register("agents", AgentSelectScreen(self))
         self.manager.register("size", TeamSizeScreen(self))
         self.manager.register("select", PokemonSelectScreen(self))
         self.manager.register("battle", BattleScreen(self))

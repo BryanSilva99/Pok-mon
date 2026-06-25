@@ -13,7 +13,8 @@ def crear_individuo():
 
 
 def normalizar_pesos(pesos):
-    pesos_positivos = {nombre: max(0.001, pesos[nombre]) for nombre in NOMBRES_PESOS}
+    pesos_positivos = {nombre: max(
+        0.001, pesos[nombre]) for nombre in NOMBRES_PESOS}
     total = sum(pesos_positivos.values())
     return {nombre: valor / total for nombre, valor in pesos_positivos.items()}
 
@@ -67,7 +68,8 @@ def evaluar_fitness(pesos, partidas_por_rival=10):
 
 
 def seleccionar_padres(evaluados, cantidad):
-    ordenados = sorted(evaluados, key=lambda individuo: individuo["fitness"], reverse=True)
+    ordenados = sorted(
+        evaluados, key=lambda individuo: individuo["fitness"], reverse=True)
     return ordenados[:cantidad]
 
 
@@ -76,7 +78,8 @@ def cruzar(padre_1, padre_2):
 
     for nombre in NOMBRES_PESOS:
         mezcla = random.random()
-        hijo[nombre] = padre_1[nombre] * mezcla + padre_2[nombre] * (1 - mezcla)
+        hijo[nombre] = padre_1[nombre] * \
+            mezcla + padre_2[nombre] * (1 - mezcla)
 
     return normalizar_pesos(hijo)
 
@@ -107,7 +110,8 @@ def optimizar_pesos(
             evaluar_fitness(individuo, partidas_por_rival)
             for individuo in poblacion
         ]
-        evaluados.sort(key=lambda individuo: individuo["fitness"], reverse=True)
+        evaluados.sort(
+            key=lambda individuo: individuo["fitness"], reverse=True)
         mejor = evaluados[0]
         historial.append(
             {
@@ -130,5 +134,6 @@ def optimizar_pesos(
 
         poblacion = nueva_poblacion
 
-    evaluacion_final = evaluar_fitness(historial[-1]["pesos"], partidas_por_rival * 3)
+    evaluacion_final = evaluar_fitness(
+        historial[-1]["pesos"], partidas_por_rival * 3)
     return evaluacion_final, historial
